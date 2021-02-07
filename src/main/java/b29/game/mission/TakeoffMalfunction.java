@@ -1,0 +1,10 @@
+package b29.game.mission;
+
+public enum TakeoffMalfunction {
+    ENGINE_FIRE_DURING_RUN_UP,
+    UNUSUAL_POWER_CONDITIONS,
+    ENGINE_FAILURE,
+    RUNAWAY_PROPELLER_AFTER_TAKEOFF,
+    ENGINE_FIRE_AFTER_TAKEOFF,
+    FALSE_ALARM
+}
