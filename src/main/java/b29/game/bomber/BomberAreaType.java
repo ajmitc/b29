@@ -2,10 +2,11 @@ package b29.game.bomber;
 
 public enum BomberAreaType {
     NOSE( "Nose" ),
-    PILOT_COMPARTMENT( "Pilot Compartment" ),
-    BOMB_BAY( "Bomb Bay" ),
-    RADIO_ROOM( "Radio Room" ),
+    NAV_RADIO( "Nav/Radio" ),
+    FWD_BOMB_BAY( "Fwd Bomb Bay" ),
+    REAR_BOMB_BAY( "Aft Bomb Bay" ),
     WAIST( "Waist" ),
+    UTILITY("Utility"),
     TAIL( "Tail" ),
     PORT_WING( "Port Wing" ),
     STBD_WING( "Starboard Wing" );

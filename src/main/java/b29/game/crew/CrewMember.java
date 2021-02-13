@@ -3,14 +3,18 @@ package b29.game.crew;
 import b29.game.Experience;
 import b29.game.bomber.CrewPosition;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class CrewMember {
     private String name;
     private CrewPosition defaultRole;
     private int kills;
     private CrewStatus status;
     private Experience experience;
+    private List<CrewAilment> ailments = new ArrayList<>();
 
-    public CrewMember( String name, CrewPosition defaultRole ) {
+    public CrewMember(String name, CrewPosition defaultRole) {
         this.name = name;
         this.defaultRole = defaultRole;
         this.kills = 0;
@@ -22,7 +26,7 @@ public class CrewMember {
         return name;
     }
 
-    public void setName( String name ) {
+    public void setName(String name) {
         this.name = name;
     }
 
@@ -30,7 +34,7 @@ public class CrewMember {
         return defaultRole;
     }
 
-    public void setDefaultRole( CrewPosition defaultRole ) {
+    public void setDefaultRole(CrewPosition defaultRole) {
         this.defaultRole = defaultRole;
     }
 
@@ -38,7 +42,7 @@ public class CrewMember {
         return kills;
     }
 
-    public void setKills( int kills ) {
+    public void setKills(int kills) {
         this.kills = kills;
     }
 
@@ -46,8 +50,12 @@ public class CrewMember {
         return status;
     }
 
-    public void setStatus( CrewStatus status ) {
+    public void setStatus(CrewStatus status) {
         this.status = status;
+    }
+
+    public boolean isSwOrKia() {
+        return status == CrewStatus.SERIOUS_WOUND || status == CrewStatus.KIA;
     }
 
     public Experience getExperience() {
@@ -56,5 +64,9 @@ public class CrewMember {
 
     public void setExperience(Experience experience) {
         this.experience = experience;
+    }
+
+    public List<CrewAilment> getAilments() {
+        return ailments;
     }
 }

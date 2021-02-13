@@ -2,10 +2,9 @@ package b29.game.mission;
 
 public enum MapAreaCode {
     WATER( "W" ),
-    FRANCE( "F" ),
-    BELGIUM( "B" ),
-    GERMANY( "G" ),
-    NETHERLANDS( "N" );
+    MARIANAS( "M" ),
+    IWO_JIMA( "I" ),
+    JAPAN( "J" );
 
     private String name;
     MapAreaCode( String name ) {

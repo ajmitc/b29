@@ -7,9 +7,10 @@ public enum CrewPosition {
     COPILOT( "Copilot" ),
     ENGINEER( "Engineer" ),
     RADIO_OPERATOR( "Radio Operator" ),
-    BALL_GUNNER( "Ball Gunner" ),
-    PORT_WAIST_GUNNER( "Port Waist Gunner" ),
-    STBD_WAIST_GUNNER( "Stbd Waist Gunner" ),
+    CFC_CONTROLLER( "CFC Controller" ),
+    LEFT_GUNNER( "Left Gunner" ),
+    RIGHT_GUNNER( "Right Gunner" ),
+    RADAR_OPERATOR( "Radar Operator" ),
     TAIL_GUNNER( "Tail Gunner" );
 
     private String name;

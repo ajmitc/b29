@@ -2,6 +2,7 @@ package b29.game.mission;
 
 import b29.game.bomber.Altitude;
 import b29.game.mission.chart.FighterInfo;
+import b29.game.mission.chart.JapaneseFighterDensity;
 
 import java.util.HashMap;
 import java.util.List;
@@ -9,22 +10,24 @@ import java.util.Map;
 
 public class Mission {
     private int missionNumber;
+    private MapAreaCode baseArea;
     private Target target;
     private TargetType targetType;
     private int targetZone;
-    private Weather targetWeather;
     private FormationPosition formationPosition;
     private SquadronPosition squadronPosition;
     private TimeOfDay missionTimeOfDay;
+    private TimeOfDay baseTakeoffTimeOfDay;
+    private TimeOfDay expectedLandingTimeOfDay;
     private Altitude missionAltitude;
+    private JapaneseFighterDensity expectedFighterDensity;
 
     private Map<Integer, FighterCoverage> fighterCoverageOut;
     private Map<Integer, FighterCoverage> fighterCoverageBack;
-    private Map<Integer, Integer> fighterWavesModifiers;
+    private Map<Integer, Integer> fighterDensityModifiers;
     private Map<Integer, MapAreaCode> fighterWaveCodes;
     private Map<Integer, List<List<FighterInfo>>> fighterWavesOut;
     private Map<Integer, List<List<FighterInfo>>> fighterWavesBack;
-    private Weather baseWeather;
     private int bombRunPercentage;
     private int landingModifier;
     private Direction direction;
@@ -32,32 +35,44 @@ public class Mission {
     private int zone;
     private int turnsInCurrentZone;
     private boolean outOfFormation;
+    private boolean escortAvailable;
 
     // Temporary variables used to track in-game progress
     private int numGermanFighterWaves;
     private int currentGermanFighterWave;
     private int numWaveAttacks;
     private int numFighterDefenseLeft;
-    private List<GermanFighter> currentWaveFighters;
+    private List<JapaneseFighter> currentWaveFighters;
+    private FighterType escort;
+    private Weather weather;
+    private FormationAssembly formationAssembly;
+    private boolean stormSystemEncountered;
+    private boolean highPressureSystemEncountered;
+    private boolean pathfinder;
+    private boolean pickleBarrel;
+    private boolean ableToPerformEvasiveAction;
+    private List<JapaneseFighter> japaneseFighters;
 
     public Mission(int missionNumber) {
         this.missionNumber = missionNumber;
+        baseArea = MapAreaCode.MARIANAS;
         target = null;
         targetType = null;
         targetZone = 0;
-        targetWeather = null;
         formationPosition = null;
         squadronPosition = null;
         missionTimeOfDay = TimeOfDay.DAY;
+        baseTakeoffTimeOfDay = TimeOfDay.DAY;
+        expectedLandingTimeOfDay = TimeOfDay.DAY;
         missionAltitude = Altitude.MED;
+        expectedFighterDensity = JapaneseFighterDensity.NONE;
 
         fighterCoverageOut = new HashMap<>();
         fighterCoverageBack = new HashMap<>();
-        fighterWavesModifiers = new HashMap<>();
+        fighterDensityModifiers = new HashMap<>();
         fighterWaveCodes = new HashMap<>();
         fighterWavesOut = new HashMap<>();
         fighterWavesBack = new HashMap<>();
-        baseWeather = null;
         bombRunPercentage = 0;
         landingModifier = 0;
         direction = Direction.TO_TARGET;
@@ -65,12 +80,21 @@ public class Mission {
         zone = 1;
         turnsInCurrentZone = 0;
         outOfFormation = false;
+        escortAvailable = false;
 
         numGermanFighterWaves = 0;
         currentGermanFighterWave = 0;
         numWaveAttacks = 0;
         numFighterDefenseLeft = 0;
         currentWaveFighters = null;
+        escort = null;
+        weather = null;
+        formationAssembly = null;
+        stormSystemEncountered = false;
+        highPressureSystemEncountered = false;
+        pathfinder = false;
+        pickleBarrel = false;
+        ableToPerformEvasiveAction = true;
     }
 
     public int getMissionNumber() {
@@ -79,6 +103,14 @@ public class Mission {
 
     public void setMissionNumber(int missionNumber) {
         this.missionNumber = missionNumber;
+    }
+
+    public MapAreaCode getBaseArea() {
+        return baseArea;
+    }
+
+    public void setBaseArea(MapAreaCode baseArea) {
+        this.baseArea = baseArea;
     }
 
     public Target getTarget() {
@@ -103,14 +135,6 @@ public class Mission {
 
     public void setTargetZone(int targetZone) {
         this.targetZone = targetZone;
-    }
-
-    public Weather getTargetWeather() {
-        return targetWeather;
-    }
-
-    public void setTargetWeather(Weather targetWeather) {
-        this.targetWeather = targetWeather;
     }
 
     public FormationPosition getFormationPosition() {
@@ -153,12 +177,12 @@ public class Mission {
         this.fighterCoverageBack = fighterCoverageBack;
     }
 
-    public Map<Integer, Integer> getFighterWavesModifiers() {
-        return fighterWavesModifiers;
+    public Map<Integer, Integer> getFighterDensityModifiers() {
+        return fighterDensityModifiers;
     }
 
-    public void setFighterWavesModifiers(Map<Integer, Integer> fighterWavesModifiers) {
-        this.fighterWavesModifiers = fighterWavesModifiers;
+    public void setFighterDensityModifiers(Map<Integer, Integer> fighterDensityModifiers) {
+        this.fighterDensityModifiers = fighterDensityModifiers;
     }
 
     public Map<Integer, MapAreaCode> getFighterWaveCodes() {
@@ -189,14 +213,6 @@ public class Mission {
         return direction == Direction.TO_TARGET?
                 this.fighterWavesOut.get(zone).get(this.fighterWavesOut.get(zone).size() - 1):
                 this.fighterWavesBack.get(zone).get(this.fighterWavesBack.get(zone).size() - 1);
-    }
-
-    public Weather getBaseWeather() {
-        return baseWeather;
-    }
-
-    public void setBaseWeather(Weather baseWeather) {
-        this.baseWeather = baseWeather;
     }
 
     public int getBombRunPercentage() {
@@ -295,11 +311,11 @@ public class Mission {
         this.numFighterDefenseLeft -= 1;
     }
 
-    public List<GermanFighter> getCurrentWaveFighters() {
+    public List<JapaneseFighter> getCurrentWaveFighters() {
         return currentWaveFighters;
     }
 
-    public void setCurrentWaveFighters(List<GermanFighter> currentWaveFighters) {
+    public void setCurrentWaveFighters(List<JapaneseFighter> currentWaveFighters) {
         this.currentWaveFighters = currentWaveFighters;
     }
 
@@ -309,5 +325,109 @@ public class Mission {
 
     public void setMissionAltitude(Altitude missionAltitude) {
         this.missionAltitude = missionAltitude;
+    }
+
+    public boolean isEscortAvailable() {
+        return escortAvailable;
+    }
+
+    public void setEscortAvailable(boolean escortAvailable) {
+        this.escortAvailable = escortAvailable;
+    }
+
+    public FighterType getEscort() {
+        return escort;
+    }
+
+    public void setEscort(FighterType escort) {
+        this.escort = escort;
+    }
+
+    public TimeOfDay getBaseTakeoffTimeOfDay() {
+        return baseTakeoffTimeOfDay;
+    }
+
+    public void setBaseTakeoffTimeOfDay(TimeOfDay baseTakeoffTimeOfDay) {
+        this.baseTakeoffTimeOfDay = baseTakeoffTimeOfDay;
+    }
+
+    public TimeOfDay getExpectedLandingTimeOfDay() {
+        return expectedLandingTimeOfDay;
+    }
+
+    public void setExpectedLandingTimeOfDay(TimeOfDay expectedLandingTimeOfDay) {
+        this.expectedLandingTimeOfDay = expectedLandingTimeOfDay;
+    }
+
+    public Weather getWeather() {
+        return weather;
+    }
+
+    public void setWeather(Weather baseWeather) {
+        this.weather = baseWeather;
+    }
+
+    public JapaneseFighterDensity getExpectedFighterDensity() {
+        return expectedFighterDensity;
+    }
+
+    public void setExpectedFighterDensity(JapaneseFighterDensity expectedFighterDensity) {
+        this.expectedFighterDensity = expectedFighterDensity;
+    }
+
+    public FormationAssembly getFormationAssembly() {
+        return formationAssembly;
+    }
+
+    public void setFormationAssembly(FormationAssembly formationAssembly) {
+        this.formationAssembly = formationAssembly;
+    }
+
+    public boolean isStormSystemEncountered() {
+        return stormSystemEncountered;
+    }
+
+    public void setStormSystemEncountered(boolean stormSystemEncountered) {
+        this.stormSystemEncountered = stormSystemEncountered;
+    }
+
+    public boolean isPathfinder() {
+        return pathfinder;
+    }
+
+    public void setPathfinder(boolean pathfinder) {
+        this.pathfinder = pathfinder;
+    }
+
+    public boolean isPickleBarrel() {
+        return pickleBarrel;
+    }
+
+    public void setPickleBarrel(boolean pickleBarrel) {
+        this.pickleBarrel = pickleBarrel;
+    }
+
+    public boolean isHighPressureSystemEncountered() {
+        return highPressureSystemEncountered;
+    }
+
+    public void setHighPressureSystemEncountered(boolean highPressureSystemEncountered) {
+        this.highPressureSystemEncountered = highPressureSystemEncountered;
+    }
+
+    public boolean isAbleToPerformEvasiveAction() {
+        return ableToPerformEvasiveAction;
+    }
+
+    public void setAbleToPerformEvasiveAction(boolean ableToPerformEvasiveAction) {
+        this.ableToPerformEvasiveAction = ableToPerformEvasiveAction;
+    }
+
+    public List<JapaneseFighter> getJapaneseFighters() {
+        return japaneseFighters;
+    }
+
+    public void setJapaneseFighters(List<JapaneseFighter> japaneseFighters) {
+        this.japaneseFighters = japaneseFighters;
     }
 }

@@ -1,6 +1,7 @@
 package b29.game.bomber;
 
 import b29.game.crew.CrewMember;
+import b29.game.mission.Course;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,20 +12,29 @@ public class Bomber {
     private String name;
     private int numMissionsCompleted;
     private BomberStatus bomberStatus;
-    private List<CrewMember> crew;
-    private Map<BomberAreaType, BomberArea> areas;
-    private Map<GunPosition, Gun> guns;
+    private List<CrewMember> crew = new ArrayList<>();
+    private Map<BomberAreaType, BomberArea> areas = new HashMap<>();
+    private Map<GunPosition, Gun> guns = new HashMap<>();
     private Altitude altitude;
     private Pressurization pressurization;
     private boolean carryingBombs;
+    private boolean underControl;
+    private Course course;
 
     public Bomber() {
         this.name = "";
         this.numMissionsCompleted = 0;
         this.bomberStatus = BomberStatus.SAFE;
-        this.crew = new ArrayList<>();
-        this.areas = new HashMap<>();
-        this.guns = new HashMap<>();
+
+        areas.put(BomberAreaType.NOSE, new BomberArea(BomberAreaType.NOSE));
+        areas.put(BomberAreaType.NAV_RADIO, new BomberArea(BomberAreaType.NAV_RADIO));
+        areas.put(BomberAreaType.FWD_BOMB_BAY, new BomberArea(BomberAreaType.FWD_BOMB_BAY));
+        areas.put(BomberAreaType.REAR_BOMB_BAY, new BomberArea(BomberAreaType.REAR_BOMB_BAY));
+        areas.put(BomberAreaType.WAIST, new BomberArea(BomberAreaType.WAIST));
+        areas.put(BomberAreaType.UTILITY, new BomberArea(BomberAreaType.UTILITY));
+        areas.put(BomberAreaType.TAIL, new BomberArea(BomberAreaType.TAIL));
+        areas.put(BomberAreaType.STBD_WING, new BomberArea(BomberAreaType.STBD_WING));
+        areas.put(BomberAreaType.PORT_WING, new BomberArea(BomberAreaType.PORT_WING));
 
         for (GunPosition position : GunPosition.values()) {
             Gun gun = new Gun(position, getMaxAmmo(position));
@@ -34,18 +44,21 @@ public class Bomber {
         this.altitude = Altitude.LO;
         this.pressurization = Pressurization.OFF;
         this.carryingBombs = true;
+        this.underControl = true;
+        this.course = Course.ON_COURSE;
     }
 
     public void assignCrewToPositions() {
         areas.get(BomberAreaType.NOSE).getCrewAssignments().put(CrewPosition.BOMBARDIER, getCrewMemberByDefaultRole(CrewPosition.BOMBARDIER));
-        areas.get(BomberAreaType.NOSE).getCrewAssignments().put(CrewPosition.NAVIGATOR, getCrewMemberByDefaultRole(CrewPosition.NAVIGATOR));
-        areas.get(BomberAreaType.PILOT_COMPARTMENT).getCrewAssignments().put(CrewPosition.PILOT, getCrewMemberByDefaultRole(CrewPosition.PILOT));
-        areas.get(BomberAreaType.PILOT_COMPARTMENT).getCrewAssignments().put(CrewPosition.COPILOT, getCrewMemberByDefaultRole(CrewPosition.COPILOT));
-        areas.get(BomberAreaType.PILOT_COMPARTMENT).getCrewAssignments().put(CrewPosition.ENGINEER, getCrewMemberByDefaultRole(CrewPosition.ENGINEER));
-        areas.get(BomberAreaType.RADIO_ROOM).getCrewAssignments().put(CrewPosition.RADIO_OPERATOR, getCrewMemberByDefaultRole(CrewPosition.RADIO_OPERATOR));
-        areas.get(BomberAreaType.WAIST).getCrewAssignments().put(CrewPosition.BALL_GUNNER, getCrewMemberByDefaultRole(CrewPosition.BALL_GUNNER));
-        areas.get(BomberAreaType.WAIST).getCrewAssignments().put(CrewPosition.PORT_WAIST_GUNNER, getCrewMemberByDefaultRole(CrewPosition.PORT_WAIST_GUNNER));
-        areas.get(BomberAreaType.WAIST).getCrewAssignments().put(CrewPosition.STBD_WAIST_GUNNER, getCrewMemberByDefaultRole(CrewPosition.STBD_WAIST_GUNNER));
+        areas.get(BomberAreaType.NOSE).getCrewAssignments().put(CrewPosition.PILOT, getCrewMemberByDefaultRole(CrewPosition.PILOT));
+        areas.get(BomberAreaType.NOSE).getCrewAssignments().put(CrewPosition.COPILOT, getCrewMemberByDefaultRole(CrewPosition.COPILOT));
+        areas.get(BomberAreaType.NAV_RADIO).getCrewAssignments().put(CrewPosition.NAVIGATOR, getCrewMemberByDefaultRole(CrewPosition.NAVIGATOR));
+        areas.get(BomberAreaType.NAV_RADIO).getCrewAssignments().put(CrewPosition.ENGINEER, getCrewMemberByDefaultRole(CrewPosition.ENGINEER));
+        areas.get(BomberAreaType.NAV_RADIO).getCrewAssignments().put(CrewPosition.RADIO_OPERATOR, getCrewMemberByDefaultRole(CrewPosition.RADIO_OPERATOR));
+        areas.get(BomberAreaType.WAIST).getCrewAssignments().put(CrewPosition.CFC_CONTROLLER, getCrewMemberByDefaultRole(CrewPosition.CFC_CONTROLLER));
+        areas.get(BomberAreaType.WAIST).getCrewAssignments().put(CrewPosition.LEFT_GUNNER, getCrewMemberByDefaultRole(CrewPosition.LEFT_GUNNER));
+        areas.get(BomberAreaType.WAIST).getCrewAssignments().put(CrewPosition.RIGHT_GUNNER, getCrewMemberByDefaultRole(CrewPosition.RIGHT_GUNNER));
+        areas.get(BomberAreaType.WAIST).getCrewAssignments().put(CrewPosition.RADAR_OPERATOR, getCrewMemberByDefaultRole(CrewPosition.RADAR_OPERATOR));
         areas.get(BomberAreaType.TAIL).getCrewAssignments().put(CrewPosition.TAIL_GUNNER, getCrewMemberByDefaultRole(CrewPosition.TAIL_GUNNER));
     }
 
@@ -60,26 +73,32 @@ public class Bomber {
 
     public int getMaxAmmo(GunPosition position) {
         switch (position) {
-            case NOSE:
+            case FWD_UPPER_TURRET:
+                return 10;
+            case FWD_LOWER_TURRET:
                 return 15;
-            case PORT_CHEEK:
-                return 10;
-            case STBD_CHEEK:
-                return 10;
-            case TOP_TURRET:
-                return 16;
-            case BALL_TURRET:
+            case REAR_UPPER_TURRET:
+                return 25;
+            case REAR_LOWER_TURRET:
                 return 20;
             case TAIL_TURRET:
-                return 23;
-            case STBD_WAIST:
-                return 20;
-            case PORT_WAIST:
-                return 20;
-            case RADIO:
+                return 30;
+            case TAIL_CANNON:
                 return 10;
         }
         return 0;
+    }
+
+    public boolean hasDamage(Damage damage){
+        for (BomberAreaType bomberAreaType: areas.keySet()){
+            if (areas.get(bomberAreaType).getDamage().contains(damage))
+                return true;
+        }
+        return false;
+    }
+
+    public boolean hasDamage(BomberAreaType bomberAreaType, Damage damage){
+        return areas.get(bomberAreaType).getDamage().contains(damage);
     }
 
     public String getName() {
@@ -152,5 +171,29 @@ public class Bomber {
 
     public void setCarryingBombs(boolean carryingBombs) {
         this.carryingBombs = carryingBombs;
+    }
+
+    public boolean isUnderControl() {
+        return underControl;
+    }
+
+    public void setUnderControl(boolean underControl) {
+        this.underControl = underControl;
+    }
+
+    public Course getCourse() {
+        return course;
+    }
+
+    public void setCourse(Course course) {
+        this.course = course;
+    }
+
+    public boolean isOnCourse(){
+        return course == Course.ON_COURSE;
+    }
+
+    public boolean isOffCourse(){
+        return course == Course.OFF_COURSE;
     }
 }

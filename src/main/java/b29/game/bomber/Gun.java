@@ -7,6 +7,7 @@ public class Gun {
     private CrewMember crewMember;
     private int maxAmmo;
     private int ammoRemaining;
+    private boolean operational;
 
     // In-game state
     private boolean fireThisTurn;
@@ -16,6 +17,7 @@ public class Gun {
         this.crewMember = null;
         this.maxAmmo = maxAmmo;
         this.ammoRemaining = this.maxAmmo;
+        this.operational = true;
 
         this.fireThisTurn = false;
     }
@@ -50,6 +52,14 @@ public class Gun {
 
     public void setAmmoRemaining( int ammoRemaining ) {
         this.ammoRemaining = ammoRemaining;
+    }
+
+    public boolean isOperational() {
+        return operational;
+    }
+
+    public void setOperational(boolean operational) {
+        this.operational = operational;
     }
 
     public boolean isFireThisTurn() {
