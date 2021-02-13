@@ -20,6 +20,7 @@ public class Bomber {
     private boolean carryingBombs;
     private boolean underControl;
     private Course course;
+    private boolean performingEvasiveAction;
 
     public Bomber() {
         this.name = "";
@@ -46,6 +47,7 @@ public class Bomber {
         this.carryingBombs = true;
         this.underControl = true;
         this.course = Course.ON_COURSE;
+        this.performingEvasiveAction = false;
     }
 
     public void assignCrewToPositions() {
@@ -195,5 +197,13 @@ public class Bomber {
 
     public boolean isOffCourse(){
         return course == Course.OFF_COURSE;
+    }
+
+    public boolean isPerformingEvasiveAction() {
+        return performingEvasiveAction;
+    }
+
+    public void setPerformingEvasiveAction(boolean performingEvasiveAction) {
+        this.performingEvasiveAction = performingEvasiveAction;
     }
 }

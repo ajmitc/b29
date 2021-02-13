@@ -13,6 +13,7 @@ public class CrewMember {
     private CrewStatus status;
     private Experience experience;
     private List<CrewAilment> ailments = new ArrayList<>();
+    private int numMissionsFlown;
 
     public CrewMember(String name, CrewPosition defaultRole) {
         this.name = name;
@@ -20,6 +21,7 @@ public class CrewMember {
         this.kills = 0;
         this.status = CrewStatus.OK;
         this.experience = Experience.GREEN;
+        this.numMissionsFlown = 0;
     }
 
     public String getName() {
@@ -68,5 +70,13 @@ public class CrewMember {
 
     public List<CrewAilment> getAilments() {
         return ailments;
+    }
+
+    public int getNumMissionsFlown() {
+        return numMissionsFlown;
+    }
+
+    public void setNumMissionsFlown(int numMissionsFlown) {
+        this.numMissionsFlown = numMissionsFlown;
     }
 }

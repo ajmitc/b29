@@ -15,7 +15,6 @@ import b29.view.View;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.List;
 
 public class Controller {
     private Model model;
@@ -56,11 +55,39 @@ public class Controller {
                 case SETUP_MISSION:{
                     switch (model.getGame().getPhaseStep()){
                         case START_PHASE:
-                            // Pre-Mission Steps
-                            // 1.1.Roll target city (G-1 , G-2 or G-3)
-                            // 1.2.Roll B-17 formation position; note attacking fighter modifier (G-4)
-                            // 1.3.Roll flight log gazetteer; note attacking fighter modifier (G-11)
-                            // 1.4.Combine and record modifications to attackers on Mission Chart
+                            if (model.getGame().getMission() == null){
+                                model.getGame().setMission(new Mission(1));
+                            }
+                            if (model.getGame().getBomber() == null){
+                                model.getGame().setBomber(new Bomber());
+                            }
+                            Mission mission = model.getGame().getMission();
+
+                            // Get Mission Time Of Day
+                            mission.setMissionTimeOfDay(MissionSetupTable.getMissionTimeOfDay(mission.getMissionNumber()));
+
+                            // Set Target
+                            MissionSetupTable.TargetInfo targetInfo = MissionSetupTable.getMissionTarget(mission.getMissionNumber(), mission.getMissionTimeOfDay());
+                            mission.setTarget(targetInfo.target);
+                            mission.setTargetType(targetInfo.targetType);
+
+                            // Set Altitude
+                            mission.setMissionAltitude(MissionSetupTable.getMissionAltitude(mission.getMissionNumber(), mission.getMissionTimeOfDay(), mission.getTargetType()));
+
+                            // Set Formation Position
+                            mission.setFormationPosition(MissionSetupTable.getFormationPosition(model.getGame().getBomber()));
+
+                            // Set Squadron Position
+                            mission.setSquadronPosition(MissionSetupTable.getSquadronPosition());
+
+                            // Set expected level of resistance
+                            mission.setExpectedFighterDensity(MissionSetupTable.getExpectedJapaneseFighterResistance(mission));
+
+                            // TODO Night Mission Gunner Allocation
+
+                            // Set Escort Availability
+                            mission.setEscortAvailable(MissionSetupTable.isFighterEscortAvailable(mission));
+
                             model.getGame().setPhaseStep(PhaseStep.END_PHASE);
                             break;
                         case END_PHASE:

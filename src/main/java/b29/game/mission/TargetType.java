@@ -1,18 +1,21 @@
 package b29.game.mission;
 
 public enum TargetType {
-    AIRFIELD( "Airfield" ),
-    AIRCRAFT( "Aircraft" ),
-    RAIL_YARD( "Rail Yard" ),
-    SHIP_YARD( "Ship Yard" ),
-    INDUSTRY( "Industry" ),
-    U_BOATS( "U Boats" );
+    AIRFIELD("Airfield"),
+    AIRCRAFT_FACTORY("Aircraft Factory"),
+    URBAN_AREA("Rail Yard");
 
     private String name;
-    TargetType( String name ) {
+
+    TargetType(String name) {
         this.name = name;
     }
 
-    public String getName(){ return name; }
-    public String toString(){ return name; }
+    public String getName() {
+        return name;
+    }
+
+    public String toString() {
+        return name;
+    }
 }

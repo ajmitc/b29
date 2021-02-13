@@ -13,6 +13,7 @@ public enum FighterType {
     FIGHTER_OSCAR("Nakajima Ki-43 Hayabusa"),
     FIGHTER_GEORGE("Kawanishi N1K2-J Shiden"),
     FIGHTER_JACK("Mitsubishi J2M Raiden"),
+    FIGHTER_IRVING("Irving"),
 
     // For behavior, see Chart book pg 15, Table 5-3 Note b
     BAKA_SUICIDE_ROCKER("Baka Suicide Rocket"),

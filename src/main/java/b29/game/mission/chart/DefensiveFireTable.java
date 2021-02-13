@@ -1,11 +1,13 @@
 package b29.game.mission.chart;
 
+import b29.game.Experience;
+import b29.game.bomber.Bomber;
 import b29.game.bomber.GunPosition;
-import b29.game.mission.FighterAltitude;
-import b29.game.mission.FighterApproach;
-import b29.game.mission.FighterType;
+import b29.game.mission.*;
+import b29.util.Util;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -23,6 +25,7 @@ public class DefensiveFireTable {
             }
         }
 
+        /*
         TABLE.get(FighterApproach.AREA_12).get(FighterAltitude.HIGH).put(GunPosition.TOP_TURRET, new HashMap<>());
         TABLE.get(FighterApproach.AREA_12).get(FighterAltitude.HIGH).get(GunPosition.TOP_TURRET).put(FighterType.FIGHTER_109, 6);
         TABLE.get(FighterApproach.AREA_12).get(FighterAltitude.HIGH).get(GunPosition.TOP_TURRET).put(FighterType.FIGHTER_110, 6);
@@ -234,6 +237,7 @@ public class DefensiveFireTable {
         TABLE.get(FighterApproach.VERTICAL_DIVE).get(FighterAltitude.HIGH).get(GunPosition.RADIO).put(FighterType.FIGHTER_109, 6);
         TABLE.get(FighterApproach.VERTICAL_DIVE).get(FighterAltitude.HIGH).get(GunPosition.RADIO).put(FighterType.FIGHTER_110, 6);
         TABLE.get(FighterApproach.VERTICAL_DIVE).get(FighterAltitude.HIGH).get(GunPosition.RADIO).put(FighterType.FIGHTER_190, 6);
+         */
     }
 
 
@@ -248,6 +252,69 @@ public class DefensiveFireTable {
             return guns.get(gun).get(fighter);
         }
         return 99; // Return a number too big to allow any hit
+    }
+
+    public static DefensiveFireResolution getDefensiveFireResolution(Mission mission, Bomber bomber, JapaneseFighter japaneseFighter, GunPosition gunsFiring){
+        int die = Util.roll2d();
+
+        if (die == 2)
+            return DefensiveFireResolution.GUNS_JAM;
+
+        if (die == 3 && gunsFiring == GunPosition.TAIL_CANNON)
+            return DefensiveFireResolution.TAIL_CANNON_JAMS;
+
+        if (japaneseFighter.getFighterInfo().approach == FighterApproach.VERTICAL_DIVE)
+            die -= 3;
+        if (gunsFiring == GunPosition.TAIL_CANNON)
+            die -= 2;
+
+        // TODO See Section 5.3.D
+        if (gunsFiring == GunPosition.TAIL_TURRET &&
+                (japaneseFighter.getFighterInfo().approach == FighterApproach.AREA_10_30 ||
+                        japaneseFighter.getFighterInfo().approach == FighterApproach.AREA_12 ||
+                        japaneseFighter.getFighterInfo().approach == FighterApproach.AREA_1_30))
+            die -= 1;
+
+        if (gunsFiring == GunPosition.TAIL_TURRET){
+            // TODO die -= 1 for each hit on Utility compartment ammunition feed trays
+        }
+
+        if (japaneseFighter.getExperience() == Experience.VETERAN)
+            die -= 1;
+
+        if (bomber.isPerformingEvasiveAction())
+            die -= 1;
+
+        if (mission.getMissionTimeOfDay() == TimeOfDay.NIGHT) {
+            die -= 1;
+            // TODO die -= 1 if spotted and currently fixed by spotlight
+        }
+
+        if (japaneseFighter.getExperience() == Experience.GREEN)
+            die += 1;
+
+        if (japaneseFighter.getFighterInfo().fighterType == FighterType.FIGHTER_NICK ||
+                japaneseFighter.getFighterInfo().fighterType == FighterType.FIGHTER_IRVING)
+            die += 1;
+
+        if (japaneseFighter.getFighterInfo().approach == FighterApproach.AREA_3 || japaneseFighter.getFighterInfo().approach == FighterApproach.AREA_9)
+            die += 1;
+
+        if (japaneseFighter.getFighterInfo().approach == FighterApproach.AREA_6)
+            die += 2;
+
+        if (japaneseFighter.getFighterInfo().approach == FighterApproach.VERTICAL_CLIMB)
+            die += 3;
+
+        if (die <= 1)
+            return DefensiveFireResolution.FIGHTER_ATTACKS_NORMALLY;
+        if (die == 2)
+            return DefensiveFireResolution.GUNS_JAM;
+        if (die == 3)
+            return DefensiveFireResolution.TAIL_CANNON_JAMS;
+        if (die <= 9)
+            return DefensiveFireResolution.FIGHTER_ATTACKS_NORMALLY;
+        return DefensiveFireResolution.FIGHTER_HIT;
     }
 
 
