@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Map;
 
 public class Bomber {
+    private static final int DEFAULT_MAX_FUEL = 38;
+    private static final int DEFAULT_AUX_MAX_FUEL = 4;
+
     private String name;
     private int numMissionsCompleted;
     private BomberStatus bomberStatus;
@@ -21,6 +24,9 @@ public class Bomber {
     private boolean underControl;
     private Course course;
     private boolean performingEvasiveAction;
+    private int fuelLeft;
+    private int auxAftFuelLeft;
+    private int auxFwdFuelLeft;
 
     public Bomber() {
         this.name = "";
@@ -48,6 +54,15 @@ public class Bomber {
         this.underControl = true;
         this.course = Course.ON_COURSE;
         this.performingEvasiveAction = false;
+        this.fuelLeft = DEFAULT_MAX_FUEL;
+        this.auxAftFuelLeft = DEFAULT_AUX_MAX_FUEL;
+        this.auxFwdFuelLeft = DEFAULT_AUX_MAX_FUEL;
+    }
+
+    public void createDefaultCrew(){
+        for (CrewPosition crewPosition: CrewPosition.values()) {
+            this.crew.add(new CrewMember(crewPosition.getName(), crewPosition));
+        }
     }
 
     public void assignCrewToPositions() {
@@ -101,6 +116,31 @@ public class Bomber {
 
     public boolean hasDamage(BomberAreaType bomberAreaType, Damage damage){
         return areas.get(bomberAreaType).getDamage().contains(damage);
+    }
+
+    /**
+     * Use some fuel
+     * @return true if fuel remains, false if all fuel is used
+     */
+    public boolean consumeFuel(int amount){
+        if (auxFwdFuelLeft > 0 && amount > 0) {
+            auxFwdFuelLeft -= 1;
+            amount -= 1;
+        }
+
+        if (auxAftFuelLeft > 0 && amount > 0) {
+            auxAftFuelLeft -= 1;
+            amount -= 1;
+        }
+
+        if (fuelLeft > 0 && amount > 0){
+            fuelLeft -= amount;
+        }
+
+        if (fuelLeft < 0)
+            fuelLeft = 0;
+
+        return fuelLeft > 0;
     }
 
     public String getName() {
@@ -205,5 +245,29 @@ public class Bomber {
 
     public void setPerformingEvasiveAction(boolean performingEvasiveAction) {
         this.performingEvasiveAction = performingEvasiveAction;
+    }
+
+    public int getFuelLeft() {
+        return fuelLeft;
+    }
+
+    public void setFuelLeft(int fuelLeft) {
+        this.fuelLeft = fuelLeft;
+    }
+
+    public int getAuxAftFuelLeft() {
+        return auxAftFuelLeft;
+    }
+
+    public void setAuxAftFuelLeft(int auxAftFuelLeft) {
+        this.auxAftFuelLeft = auxAftFuelLeft;
+    }
+
+    public int getAuxFwdFuelLeft() {
+        return auxFwdFuelLeft;
+    }
+
+    public void setAuxFwdFuelLeft(int auxFwdFuelLeft) {
+        this.auxFwdFuelLeft = auxFwdFuelLeft;
     }
 }

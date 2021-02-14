@@ -21,6 +21,7 @@ public class Mission {
     private TimeOfDay expectedLandingTimeOfDay;
     private Altitude missionAltitude;
     private JapaneseFighterDensity expectedFighterDensity;
+    private CourseEnum course;
 
     private Map<Integer, FighterCoverage> fighterCoverageOut;
     private Map<Integer, FighterCoverage> fighterCoverageBack;
@@ -66,6 +67,7 @@ public class Mission {
         expectedLandingTimeOfDay = TimeOfDay.DAY;
         missionAltitude = Altitude.MED;
         expectedFighterDensity = JapaneseFighterDensity.NONE;
+        course = CourseEnum.ON_COURSE;
 
         fighterCoverageOut = new HashMap<>();
         fighterCoverageBack = new HashMap<>();
@@ -429,5 +431,13 @@ public class Mission {
 
     public void setJapaneseFighters(List<JapaneseFighter> japaneseFighters) {
         this.japaneseFighters = japaneseFighters;
+    }
+
+    public CourseEnum getCourse() {
+        return course;
+    }
+
+    public void setCourse(CourseEnum course) {
+        this.course = course;
     }
 }

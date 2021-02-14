@@ -15,7 +15,7 @@ public class BomberArea {
     private Map<CrewPosition, CrewMember> crewAssignments;
     private List<Damage> damage;
 
-    public BomberArea( BomberAreaType type ) {
+    public BomberArea(BomberAreaType type) {
         this.type = type;
         this.crewAssignments = new HashMap<>();
         this.damage = new ArrayList<>();
@@ -25,7 +25,7 @@ public class BomberArea {
         return type;
     }
 
-    public void setType( BomberAreaType type ) {
+    public void setType(BomberAreaType type) {
         this.type = type;
     }
 
@@ -33,13 +33,13 @@ public class BomberArea {
         return crewAssignments;
     }
 
-    public void setCrewAssignments( Map<CrewPosition, CrewMember> crewAssignments ) {
+    public void setCrewAssignments(Map<CrewPosition, CrewMember> crewAssignments) {
         this.crewAssignments = crewAssignments;
     }
 
-    public CrewMember getCrewMemberInPosition( CrewPosition position ) {
-        if( crewAssignments.containsKey( position ) )
-            return crewAssignments.get( position );
+    public CrewMember getCrewMemberInPosition(CrewPosition position) {
+        if (crewAssignments.containsKey(position))
+            return crewAssignments.get(position);
         return null;
     }
 
@@ -47,7 +47,7 @@ public class BomberArea {
         return damage;
     }
 
-    public void setDamage( List<Damage> damage ) {
+    public void setDamage(List<Damage> damage) {
         this.damage = damage;
     }
 }

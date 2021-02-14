@@ -197,9 +197,14 @@ public class Controller {
                             break;
                         case PLAY_MISSION_CONSUME_FUEL:
                             int fuelConsumed = getFuelConsumed(true);
+                            boolean fuelLeft = bomber.consumeFuel(fuelConsumed);
+                            if (!fuelLeft){
+                                // TODO Handle out-of-fuel (Table 4-1?)
+                            }
                             model.getGame().setPhaseStep(PhaseStep.PLAY_MISSION_WEATHER);
                             break;
                         case PLAY_MISSION_WEATHER:
+                            determineWeather();
                             // TODO If mission.isStormSystemEncountered(), weather is auto-BAD
                             model.getGame().setPhaseStep(PhaseStep.PLAY_MISSION_NAVIGATION);
                             break;
@@ -436,6 +441,9 @@ public class Controller {
         Mission mission = model.getGame().getMission();
         Bomber bomber = model.getGame().getBomber();
         if (mission.getZone() == 1 && mission.getDirection() == Direction.TO_TARGET){
+            // TODO If zone == 1 after take-off,
+            // TODO Roll 1D, if < # Guns (fwd upper, fwd lower, aft upper, aft lower, tail turret, tail cannon), -1 fuel
+            // TODO Roll 1D, if <= # Crew (CFC, Left Gunner, Right Gunner, Tail Gunner), -1 fuel
             fuelConsumed += 1;
         }
         if (enteringNewZone) {
@@ -448,6 +456,7 @@ public class Controller {
             fuelConsumed += 1;
         if (altitudeChange > 0)
             fuelConsumed += (altitudeChange * 2);
+
         return fuelConsumed;
     }
 
@@ -752,5 +761,100 @@ public class Controller {
         Bomber bomber = model.getGame().getBomber();
         Mission mission = model.getGame().getMission();
         // TODO Roll on tables 9-1 to 9-3
+    }
+
+    private void determineWeather(){
+        Mission mission = model.getGame().getMission();
+        Bomber bomber = model.getGame().getBomber();
+        Weather weather = WeatherChart.get(mission, bomber);
+        mission.setWeather(weather);
+
+        if (bomber.getFuelLeft() == 0) {
+            // TODO Handle out of fuel
+        }
+
+        if (weather == Weather.BAD){
+            handleBadWeather();
+        }
+    }
+
+
+    private void handleBadWeather(){
+        // TODO Ask player if they want to spend one fuel to steer clear of storm
+        boolean spendFuel = false;
+        BadWeatherResult badWeatherResult = WeatherChart.getBadWeatherResult(model.getGame().getMission(), model.getGame().getBomber(), spendFuel);
+        if (badWeatherResult != BadWeatherResult.SAFE_PASSAGE){
+            // Check for collision
+            CollisionResult collisionResult = WeatherChart.getCollisionResult(model.getGame().getMission().isOutOfFormation());
+            if (collisionResult == CollisionResult.SHALLOW_DIVE){
+                // TODO B-29 falls out of formation for one turn and then regains formation, if applicable
+            }
+            else if (collisionResult == CollisionResult.STEEP_DIVE){
+                // TODO B-29 falls violently out of formation
+                // TODO Roll 1D for each wing
+                int die = Util.roll();
+                if (die <= 5){
+                    // TODO Wing holds and B-29 goes to LO altitude and must remain out of formation, if applicable, for at least one turn or for how many it takes to regain mission altitude - whichever is greater
+                }
+                else {
+                    // TODO Wing rips off and crew must bail out on Table 8-5
+                }
+            }
+            else if (collisionResult == CollisionResult.MID_AIR_COLLISION){
+                // TODO B-29 destroyed and crew must bail out on Table 8-5
+            }
+        }
+    }
+
+
+    private void determineCourse(){
+        Mission mission = model.getGame().getMission();
+        Bomber bomber = model.getGame().getBomber();
+        if (mission.isOutOfFormation() || mission.getFormationPosition() == FormationPosition.LEAD){
+            int die = Util.roll2d();
+
+            CrewMember navigator = bomber.getCrewMemberByDefaultRole(CrewPosition.NAVIGATOR);
+            if (navigator.getStatus() != CrewStatus.KIA && navigator.getStatus() != CrewStatus.SERIOUS_WOUND) {
+                if (navigator.getExperience() == Experience.VETERAN)
+                    die -= 1;
+                if (navigator.getExperience() == Experience.GREEN)
+                    die += 1;
+            }
+            else
+                // +2 if Navigator KIA or Seriously Wounded
+                die += 2;
+
+            if (mission.getZone() <= 5 || (mission.getZone() >= 9 && mission.getZone() <= 9)){
+                die += 1;
+            }
+
+            if (mission.getCourse() == CourseEnum.OFF_COURSE)
+                die += 1;
+
+            // TODO +1 if Gyro Flux Gate is damaged
+            // TODO +1 if LORAN is damaged AND on Missions #11-35 AND in Zone 1-7
+            // TODO +1 if Radio Compass is damaged AND on Missions #11-35 AND in Zone 1 or 6
+            // TODO +1 if Navigator Tools are damaged
+            // TODO +1 if Radar is damaged or Radar Operator is KIA or Seriously Wounded
+
+
+            // +2 if weather is poor
+            if (mission.getWeather() == Weather.POOR)
+                die += 2;
+
+            // +3 if weather is bad
+            if (mission.getWeather() == Weather.BAD)
+                die += 3;
+
+            if (die <= 10){
+                mission.setCourse(CourseEnum.ON_COURSE);
+            }
+            else {
+                mission.setCourse(CourseEnum.OFF_COURSE);
+                if (!bomber.consumeFuel(1)){
+                    // TODO Handle bomber out of fuel
+                }
+            }
+        }
     }
 }
