@@ -6,9 +6,9 @@ import b29.game.mission.JapaneseFighterDamage;
 import b29.util.Util;
 
 /**
- * M-2
+ * TODO Implement this
  */
-public class GermanFighterDamageTable {
+public class JapaneseFighterDamageTable {
 
     public static JapaneseFighterDamage get(GunPosition gun, FighterType fighter) {
         int r = Util.roll();
@@ -25,6 +25,6 @@ public class GermanFighterDamageTable {
         return JapaneseFighterDamage.DESTROYED;
     }
 
-    private GermanFighterDamageTable() {
+    private JapaneseFighterDamageTable() {
     }
 }

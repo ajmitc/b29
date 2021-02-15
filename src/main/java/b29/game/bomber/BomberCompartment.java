@@ -1,6 +1,6 @@
 package b29.game.bomber;
 
-public enum BomberAreaType {
+public enum BomberCompartment {
     NOSE( "Nose" ),
     NAV_RADIO( "Nav/Radio" ),
     FWD_BOMB_BAY( "Fwd Bomb Bay" ),
@@ -12,7 +12,7 @@ public enum BomberAreaType {
     STBD_WING( "Starboard Wing" );
 
     private String name;
-    BomberAreaType( String name ) {
+    BomberCompartment(String name ) {
         this.name = name;
     }
 

@@ -2,12 +2,13 @@ package b29.game.mission.chart;
 
 import b29.game.Experience;
 import b29.game.bomber.Bomber;
+import b29.game.bomber.BomberCompartment;
+import b29.game.bomber.Damage;
 import b29.game.bomber.GunPosition;
 import b29.game.mission.*;
 import b29.util.Util;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -276,7 +277,9 @@ public class DefensiveFireTable {
             die -= 1;
 
         if (gunsFiring == GunPosition.TAIL_TURRET){
-            // TODO die -= 1 for each hit on Utility compartment ammunition feed trays
+            // die -= 1 for each hit on Utility compartment ammunition feed trays
+            int count = (int) bomber.getAreas().get(BomberCompartment.UTILITY).getDamage().stream().filter(d -> d == Damage.AMMUNITION_FEED_TRAY).count();
+            die -= count;
         }
 
         if (japaneseFighter.getExperience() == Experience.VETERAN)
@@ -288,6 +291,8 @@ public class DefensiveFireTable {
         if (mission.getMissionTimeOfDay() == TimeOfDay.NIGHT) {
             die -= 1;
             // TODO die -= 1 if spotted and currently fixed by spotlight
+            if (mission.isSpottedBySearchlight())
+                die -= 1;
         }
 
         if (japaneseFighter.getExperience() == Experience.GREEN)

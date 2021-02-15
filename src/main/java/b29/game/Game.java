@@ -7,6 +7,7 @@ public class Game {
     private Phase phase;
     private PhaseStep phaseStep;
 
+    private Campaign campaign;
     private Mission mission;
     private Bomber bomber;
 
@@ -29,6 +30,14 @@ public class Game {
 
     public void setPhaseStep(PhaseStep phaseStep) {
         this.phaseStep = phaseStep;
+    }
+
+    public Campaign getCampaign() {
+        return campaign;
+    }
+
+    public void setCampaign(Campaign campaign) {
+        this.campaign = campaign;
     }
 
     public Mission getMission() {

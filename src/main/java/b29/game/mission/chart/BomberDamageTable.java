@@ -1,6 +1,6 @@
 package b29.game.mission.chart;
 
-import b29.game.bomber.BomberAreaType;
+import b29.game.bomber.BomberCompartment;
 import b29.game.mission.BomberDamageType;
 import b29.util.Util;
 
@@ -314,7 +314,7 @@ public class BomberDamageTable {
         } );
     }
 
-    public static BomberDamageType get( BomberAreaType where ) {
+    public static BomberDamageType get( BomberCompartment where ) {
         int r = Util.roll( 2, true ) - 2;
         BomberDamageType[] effect = null;
         switch( where ) {

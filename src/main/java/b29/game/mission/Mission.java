@@ -53,6 +53,11 @@ public class Mission {
     private boolean pickleBarrel;
     private boolean ableToPerformEvasiveAction;
     private List<JapaneseFighter> japaneseFighters;
+    private boolean spottedBySearchlight;
+
+    // Number of turns until bomber regains formation (ie. bomber is out of formation this turn, then regains formation)
+    // If numTurnsTillRegainFormation == 0, then regain formation.  If > 0, decrement.  If < 0, ignore.
+    private int numTurnsTillRegainFormation;
 
     public Mission(int missionNumber) {
         this.missionNumber = missionNumber;
@@ -81,7 +86,7 @@ public class Mission {
         aborted = false;
         zone = 1;
         turnsInCurrentZone = 0;
-        outOfFormation = false;
+        outOfFormation = true;
         escortAvailable = false;
 
         numGermanFighterWaves = 0;
@@ -97,6 +102,8 @@ public class Mission {
         pathfinder = false;
         pickleBarrel = false;
         ableToPerformEvasiveAction = true;
+        spottedBySearchlight = false;
+        numTurnsTillRegainFormation = -1;
     }
 
     public int getMissionNumber() {
@@ -439,5 +446,25 @@ public class Mission {
 
     public void setCourse(CourseEnum course) {
         this.course = course;
+    }
+
+    public boolean isSpottedBySearchlight() {
+        return spottedBySearchlight;
+    }
+
+    public void setSpottedBySearchlight(boolean spottedBySearchlight) {
+        this.spottedBySearchlight = spottedBySearchlight;
+    }
+
+    public int getNumTurnsTillRegainFormation() {
+        return numTurnsTillRegainFormation;
+    }
+
+    public void setNumTurnsTillRegainFormation(int numTurnsTillRegainFormation) {
+        this.numTurnsTillRegainFormation = numTurnsTillRegainFormation;
+    }
+
+    public void adjNumTurnsTillRegainFormation(int amount) {
+        this.numTurnsTillRegainFormation += amount;
     }
 }

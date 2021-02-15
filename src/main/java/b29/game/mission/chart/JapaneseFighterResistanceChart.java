@@ -47,7 +47,9 @@ public class JapaneseFighterResistanceChart {
             die += 1;
         if (mission.getExpectedFighterDensity() == JapaneseFighterDensity.HEAVY)
             die += 1;
+
         // TODO If DAY mission and not out-of-formation and 1+ Formation Disrupted results from Table 4-3 from Bad weather while in formation anytime during mission, die += 1
+
         if (mission.getMissionTimeOfDay() == TimeOfDay.DAY && mission.isOutOfFormation())
             die += 2;
 
@@ -181,47 +183,47 @@ public class JapaneseFighterResistanceChart {
                     int hits = Util.roll();
                     for (int i = 0; i < hits; ++i) {
                         die = Util.roll2d();
-                        BomberAreaType areaHit = null;
+                        BomberCompartment areaHit = null;
                         switch (die){
                             case 2:
                             case 12:
                                 // Nose Hit
-                                areaHit = BomberAreaType.NOSE;
+                                areaHit = BomberCompartment.NOSE;
                                 break;
                             case 3:
                                 // Nav/Radio
-                                areaHit = BomberAreaType.NAV_RADIO;
+                                areaHit = BomberCompartment.NAV_RADIO;
                                 break;
                             case 4:
                                 // Waist
-                                areaHit = BomberAreaType.WAIST;
+                                areaHit = BomberCompartment.WAIST;
                                 break;
                             case 5:
                                 // Fwd Bomb Bay
-                                areaHit = BomberAreaType.FWD_BOMB_BAY;
+                                areaHit = BomberCompartment.FWD_BOMB_BAY;
                                 break;
                             case 6:
                                 // Stbd Wing
-                                areaHit = BomberAreaType.STBD_WING;
+                                areaHit = BomberCompartment.STBD_WING;
                                 break;
                             case 7:
                                 // Superficial damage
                                 break;
                             case 8:
                                 // Port Wing
-                                areaHit = BomberAreaType.PORT_WING;
+                                areaHit = BomberCompartment.PORT_WING;
                                 break;
                             case 9:
                                 // Rear bomb bay
-                                areaHit = BomberAreaType.REAR_BOMB_BAY;
+                                areaHit = BomberCompartment.REAR_BOMB_BAY;
                                 break;
                             case 10:
                                 // tail
-                                areaHit = BomberAreaType.TAIL;
+                                areaHit = BomberCompartment.TAIL;
                                 break;
                             case 11:
                                 // Utility
-                                areaHit = BomberAreaType.UTILITY;
+                                areaHit = BomberCompartment.UTILITY;
                                 break;
                         }
 
@@ -276,8 +278,8 @@ public class JapaneseFighterResistanceChart {
                         !bomber.hasDamage(Damage.ENGINE_4_OUT) &&
                         !bomber.hasDamage(Damage.INTERCOM_FAILURE) &&
                         !bomber.isCarryingBombs() &&
-                        ((!cfcController.isSwOrKia() && bomber.getAreas().get(BomberAreaType.WAIST).getCrewAssignments().get(CrewPosition.CFC_CONTROLLER) == cfcController) ||
-                                (!tailGunner.isSwOrKia() && bomber.getAreas().get(BomberAreaType.TAIL).getCrewAssignments().get(CrewPosition.TAIL_GUNNER) == tailGunner))){
+                        ((!cfcController.isSwOrKia() && bomber.getAreas().get(BomberCompartment.WAIST).getCrewAssignments().get(CrewPosition.CFC_CONTROLLER) == cfcController) ||
+                                (!tailGunner.isSwOrKia() && bomber.getAreas().get(BomberCompartment.TAIL).getCrewAssignments().get(CrewPosition.TAIL_GUNNER) == tailGunner))){
                     result.fighterApproach = null;
                     result.additionalFighters.clear();
                     return result;
@@ -299,8 +301,8 @@ public class JapaneseFighterResistanceChart {
                         !bomber.hasDamage(Damage.ENGINE_4_OUT) &&
                         !bomber.hasDamage(Damage.INTERCOM_FAILURE) &&
                         !bomber.isCarryingBombs() &&
-                        ((!cfcController.isSwOrKia() && bomber.getAreas().get(BomberAreaType.WAIST).getCrewAssignments().get(CrewPosition.CFC_CONTROLLER) == cfcController) ||
-                                (!tailGunner.isSwOrKia() && bomber.getAreas().get(BomberAreaType.TAIL).getCrewAssignments().get(CrewPosition.TAIL_GUNNER) == tailGunner))){
+                        ((!cfcController.isSwOrKia() && bomber.getAreas().get(BomberCompartment.WAIST).getCrewAssignments().get(CrewPosition.CFC_CONTROLLER) == cfcController) ||
+                                (!tailGunner.isSwOrKia() && bomber.getAreas().get(BomberCompartment.TAIL).getCrewAssignments().get(CrewPosition.TAIL_GUNNER) == tailGunner))){
                     result.fighterApproach = null;
                     result.additionalFighters.clear();
                     return result;
