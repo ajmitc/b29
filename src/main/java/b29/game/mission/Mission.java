@@ -21,16 +21,10 @@ public class Mission {
     private TimeOfDay expectedLandingTimeOfDay;
     private Altitude missionAltitude;
     private JapaneseFighterDensity expectedFighterDensity;
-    private CourseEnum course;
 
-    private Map<Integer, FighterCoverage> fighterCoverageOut;
-    private Map<Integer, FighterCoverage> fighterCoverageBack;
     private Map<Integer, Integer> fighterDensityModifiers;
-    private Map<Integer, MapAreaCode> fighterWaveCodes;
-    private Map<Integer, List<List<FighterInfo>>> fighterWavesOut;
-    private Map<Integer, List<List<FighterInfo>>> fighterWavesBack;
     private int bombRunPercentage;
-    private int landingModifier;
+    //private int landingModifier;
     private Direction direction;
     private boolean aborted;
     private int zone;
@@ -72,16 +66,10 @@ public class Mission {
         expectedLandingTimeOfDay = TimeOfDay.DAY;
         missionAltitude = Altitude.MED;
         expectedFighterDensity = JapaneseFighterDensity.NONE;
-        course = CourseEnum.ON_COURSE;
 
-        fighterCoverageOut = new HashMap<>();
-        fighterCoverageBack = new HashMap<>();
         fighterDensityModifiers = new HashMap<>();
-        fighterWaveCodes = new HashMap<>();
-        fighterWavesOut = new HashMap<>();
-        fighterWavesBack = new HashMap<>();
         bombRunPercentage = 0;
-        landingModifier = 0;
+        //landingModifier = 0;
         direction = Direction.TO_TARGET;
         aborted = false;
         zone = 1;
@@ -170,58 +158,12 @@ public class Mission {
         this.missionTimeOfDay = missionTimeOfDay;
     }
 
-    public Map<Integer, FighterCoverage> getFighterCoverageOut() {
-        return fighterCoverageOut;
-    }
-
-    public void setFighterCoverageOut(Map<Integer, FighterCoverage> fighterCoverageOut) {
-        this.fighterCoverageOut = fighterCoverageOut;
-    }
-
-    public Map<Integer, FighterCoverage> getFighterCoverageBack() {
-        return fighterCoverageBack;
-    }
-
-    public void setFighterCoverageBack(Map<Integer, FighterCoverage> fighterCoverageBack) {
-        this.fighterCoverageBack = fighterCoverageBack;
-    }
-
     public Map<Integer, Integer> getFighterDensityModifiers() {
         return fighterDensityModifiers;
     }
 
     public void setFighterDensityModifiers(Map<Integer, Integer> fighterDensityModifiers) {
         this.fighterDensityModifiers = fighterDensityModifiers;
-    }
-
-    public Map<Integer, MapAreaCode> getFighterWaveCodes() {
-        return fighterWaveCodes;
-    }
-
-    public void setFighterWaveCodes(Map<Integer, MapAreaCode> fighterWaveCodes) {
-        this.fighterWaveCodes = fighterWaveCodes;
-    }
-
-    public Map<Integer, List<List<FighterInfo>>> getFighterWavesOut() {
-        return fighterWavesOut;
-    }
-
-    public void setFighterWavesOut(Map<Integer, List<List<FighterInfo>>> fighterWavesOut) {
-        this.fighterWavesOut = fighterWavesOut;
-    }
-
-    public Map<Integer, List<List<FighterInfo>>> getFighterWavesBack() {
-        return fighterWavesBack;
-    }
-
-    public void setFighterWavesBack(Map<Integer, List<List<FighterInfo>>> fighterWavesBack) {
-        this.fighterWavesBack = fighterWavesBack;
-    }
-
-    public List<FighterInfo> getFighterWave(){
-        return direction == Direction.TO_TARGET?
-                this.fighterWavesOut.get(zone).get(this.fighterWavesOut.get(zone).size() - 1):
-                this.fighterWavesBack.get(zone).get(this.fighterWavesBack.get(zone).size() - 1);
     }
 
     public int getBombRunPercentage() {
@@ -232,6 +174,7 @@ public class Mission {
         this.bombRunPercentage = bombRunPercentage;
     }
 
+    /*
     public int getLandingModifier() {
         return landingModifier;
     }
@@ -239,6 +182,7 @@ public class Mission {
     public void setLandingModifier(int landingModifier) {
         this.landingModifier = landingModifier;
     }
+     */
 
     public Direction getDirection() {
         return direction;
@@ -438,14 +382,6 @@ public class Mission {
 
     public void setJapaneseFighters(List<JapaneseFighter> japaneseFighters) {
         this.japaneseFighters = japaneseFighters;
-    }
-
-    public CourseEnum getCourse() {
-        return course;
-    }
-
-    public void setCourse(CourseEnum course) {
-        this.course = course;
     }
 
     public boolean isSpottedBySearchlight() {

@@ -186,16 +186,23 @@ public class Controller {
                                 mission.setZone(0);
                             }
                             else {
-                                // TODO If some engines out, bomber flys slower and must spend 2 turns in each zone
-                                //boolean mustMove = mission.getTurnsInCurrentZone() >= 2;
-
-                                int currentZone = model.getGame().getMission().getZone();
-                                if (model.getGame().getMission().getDirection() == Direction.TO_TARGET) {
-                                    model.getGame().getMission().setZone(currentZone + 1);
-                                } else {
-                                    model.getGame().getMission().setZone(currentZone - 1);
+                                // If some engines out, bomber flys slower and must spend 2 turns in each zone
+                                boolean moveToNextZone = true;
+                                int totalEnginesOut = bomber.countEnginesOut();
+                                if (totalEnginesOut == 2 || totalEnginesOut == 3){
+                                    if (mission.getTurnsInCurrentZone() == 1){
+                                        moveToNextZone = false;
+                                    }
                                 }
 
+                                if (moveToNextZone) {
+                                    int currentZone = model.getGame().getMission().getZone();
+                                    if (model.getGame().getMission().getDirection() == Direction.TO_TARGET) {
+                                        model.getGame().getMission().setZone(currentZone + 1);
+                                    } else {
+                                        model.getGame().getMission().setZone(currentZone - 1);
+                                    }
+                                }
 
                                 // Missions 1-10: Formation ends inbound in Zone 3
                                 if (mission.getMissionNumber() <= 10 && mission.getDirection() == Direction.RETURN_HOME && mission.getZone() == 3){
@@ -206,6 +213,9 @@ public class Controller {
                                 Altitude goalAltitude = mission.getMissionAltitude();
                                 if (bomber.hasDamage(Damage.OXYGEN_OUT)){
                                     // Must descend to LO altitude
+                                    goalAltitude = Altitude.LO;
+                                }
+                                if (totalEnginesOut == 2 || totalEnginesOut == 3){
                                     goalAltitude = Altitude.LO;
                                 }
 
@@ -221,6 +231,11 @@ public class Controller {
                                         bomber.setAltitude(Altitude.values()[bomber.getAltitude().ordinal() - 1]);
                                         altitudeChange = -1;
                                     }
+                                }
+
+                                if (totalEnginesOut == 3 && bomber.getAltitude() == Altitude.LO){
+                                    // TODO Either land or bail out on Table 8-4
+                                    // TODO If landing, -3 to tables 8-1 and 8-2
                                 }
                             }
                             model.getGame().setPhaseStep(PhaseStep.PLAY_MISSION_PRESSURIZATION);
@@ -885,7 +900,7 @@ c. Roll 1D 1-5=Condition discovered in time; 6=KIA
 
     private void handleCFCSystemFails(){
         Bomber bomber = model.getGame().getBomber();
-        bomber.getAreas().get(BomberCompartment.WAIST).getDamage().add(Damage.CFC_SYSTEM_FAILURE);
+        bomber.addDamage(BomberCompartment.WAIST, Damage.CFC_SYSTEM_FAILURE);
         bomber.getGuns().get(GunPosition.FWD_UPPER_TURRET).setOperational(false);
         bomber.getGuns().get(GunPosition.FWD_LOWER_TURRET).setOperational(false);
         bomber.getGuns().get(GunPosition.REAR_UPPER_TURRET).setOperational(false);
@@ -948,7 +963,7 @@ c. Roll 1D 1-5=Condition discovered in time; 6=KIA
 
     private void handleRadarSystemFailure(){
         // Radar is inoperable for the remainder of the mission. +1 modifier on Navigation Table 5-A (p.4) of this book.
-        model.getGame().getBomber().getAreas().get(BomberCompartment.WAIST).getDamage().add(Damage.RADAR_FAILURE);
+        model.getGame().getBomber().addDamage(BomberCompartment.WAIST, Damage.RADAR_FAILURE);
     }
 
     private void handleSevereIcing(){
@@ -1180,12 +1195,16 @@ if B-29 encounters thermal turbulence from incendiary caused fires.
         Bomber bomber = model.getGame().getBomber();
         Mission mission = model.getGame().getMission();
 
+        int totalEnginesOut = bomber.countEnginesOut();
         if (mission.getBaseArea() == MapAreaCode.MARIANAS &&
                 mission.getZone() == 1 &&
                 bomber.getAltitude() == Altitude.LO &&
                 bomber.isOnCourse() &&
                 mission.getDirection() == Direction.RETURN_HOME){
             // TODO Roll on 8-1
+            if (totalEnginesOut == 2 || totalEnginesOut == 3){
+                // -2 to Landing rolls on Tables 8-1 and 8-2
+            }
         }
 
         if (mission.getBaseArea() == MapAreaCode.IWO_JIMA &&
@@ -1200,6 +1219,9 @@ if B-29 encounters thermal turbulence from incendiary caused fires.
 
         if (mission.getBaseArea() == MapAreaCode.WATER && (mission.getZone() <= 5 || (mission.getZone() >= 7 && mission.getZone() <= 9))){
             // TODO Consult Section 8.6 and roll on 8-2
+            if (totalEnginesOut == 2 || totalEnginesOut == 3){
+                // -2 to Landing rolls on Tables 8-1 and 8-2
+            }
         }
 
         /*
@@ -1336,7 +1358,7 @@ measured with Tables 9-2 and 9-3
                 die += 1;
             }
 
-            if (mission.getCourse() == CourseEnum.OFF_COURSE)
+            if (bomber.getCourse() == Course.OFF_COURSE)
                 die += 1;
 
             if (bomber.hasDamage(Damage.GYRO_FLUX_GATE_DAMAGED))
@@ -1367,10 +1389,10 @@ measured with Tables 9-2 and 9-3
                 die += 3;
 
             if (die <= 10){
-                mission.setCourse(CourseEnum.ON_COURSE);
+                bomber.setCourse(Course.ON_COURSE);
             }
             else {
-                mission.setCourse(CourseEnum.OFF_COURSE);
+                bomber.setCourse(Course.OFF_COURSE);
                 if (!bomber.consumeFuel(1)){
                     // Handle bomber out of fuel
                     handleOutOfFuel();
@@ -1493,6 +1515,10 @@ are out • Electrical system is out (see Table 7-10) • Anyone other than the 
 flying the plane (see Section 7.6) • Any damage previously received that specifically prohibits
 “Evasive Action.”
          */
+        int totalEnginesOut = model.getGame().getBomber().countEnginesOut();
+        if (totalEnginesOut == 2 || totalEnginesOut == 3){
+            model.getGame().getMission().setAbleToPerformEvasiveAction(false);
+        }
     }
 
     private void handleEngineOut(){
@@ -1539,30 +1565,54 @@ already lowered). Also, see above for additional effects.
 Note that the “20 th Air Force Base” square counts as a Zone for purpose of this rule.
          */
 
-        /*
-        Engine(s) Out
-1. One Engine Out: Can stay in formation if bombs jettisoned. If not, then Out of Formation. If
-over Target, can bomb Target.
-2. Two/Three Engines Out:
-a. Must jettison bombs and Aux Tanks
-b. Drop Out of Formation
-c. Spend two turns in each Zone
-d. Drop one level until LO.
-e. If Engines 2 and 3, pressurization lost
-f. Fighters +1 to Offensive Fire
-g. No Evasive Action
-h. -2 to Landing rolls on Tables 8-1 and 8-2
-3. Three Engines Out:
-a. LO, either Land or Bail Out on Table 8-4
-b. MED, move one Zone spending two turns then either Land or Bail Out
-c. HI, move two Zones spending two turns then either Land or Bail Out
-d. If Landing, -3 to Tables 8-1 and 8-2
-4. All Engines Out:
-a. Either crash land in present Zone or Bail Out
-b. If land/water Zone must Bail Out on Table 8.4
-c. If crash landing, apply all modifiers on Tables 8-1 and 8-3 with all maneuver surfaces
-inoperative. Landing gear may not be lowered
-         */
+        Mission mission = model.getGame().getMission();
+        Bomber bomber = model.getGame().getBomber();
+
+        int totalEnginesOut = bomber.countEnginesOut();
+        if (totalEnginesOut == 1){
+            // One Engine Out: Can stay in formation if bombs jettisoned. If not, then Out of Formation. If over Target, can bomb Target.
+            if (bomber.isCarryingBombs()){
+                if (ViewUtil.popupConfirm("Engine Out", "Jettison bombs to stay in formation?")) {
+                    bomber.setCarryingBombs(false);
+                    ViewUtil.popupNotify("Bombs jettisoned!");
+                }
+                else{
+                    mission.setOutOfFormation(true);
+                    ViewUtil.popupNotify("Dropping out of formation!");
+                }
+            }
+        }
+        else if (totalEnginesOut <= 3){
+            /*
+            Two/Three Engines Out:
+            TODO f. Fighters +1 to Offensive Fire
+             */
+            ViewUtil.popupNotify(totalEnginesOut + " engines out!");
+            if (bomber.isCarryingBombs()){
+                bomber.setCarryingBombs(false);
+                ViewUtil.popupNotify("Forced to jettison bombs!");
+            }
+            ViewUtil.popupNotify("Forced to jettison aux fuel tanks!");
+            bomber.setAuxFwdFuelLeft(0);
+            bomber.setAuxAftFuelLeft(0);
+            if (!mission.isOutOfFormation()){
+                mission.setOutOfFormation(true);
+                ViewUtil.popupNotify("Forced out of formation!");
+            }
+            if (bomber.hasDamage(Damage.ENGINE_2_OUT) && bomber.hasDamage(Damage.ENGINE_3_OUT)) {
+                bomber.setPressurization(Pressurization.OFF);
+                ViewUtil.popupNotify("Engine 2 and 3 are out, pressurization OFF!");
+            }
+
+        }
+        else if (totalEnginesOut == 4){
+            /*
+            TODO 4. All Engines Out:
+                a. Either crash land in present Zone or Bail Out
+                b. If land/water Zone must Bail Out on Table 8.4
+                c. If crash landing, apply all modifiers on Tables 8-1 and 8-3 with all maneuver surfaces inoperative. Landing gear may not be lowered
+             */
+        }
     }
 
 

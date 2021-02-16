@@ -161,6 +161,15 @@ public class Bomber {
                 hasDamage(Damage.ENGINE_4_OUT);
     }
 
+    public int countEnginesOut(){
+        int totalOut = 0;
+        totalOut += hasDamage(Damage.ENGINE_1_OUT)? 1: 0;
+        totalOut += hasDamage(Damage.ENGINE_2_OUT)? 1: 0;
+        totalOut += hasDamage(Damage.ENGINE_3_OUT)? 1: 0;
+        totalOut += hasDamage(Damage.ENGINE_4_OUT)? 1: 0;
+        return totalOut;
+    }
+
     /**
      * Use some fuel
      * @return true if fuel remains, false if all fuel is used
