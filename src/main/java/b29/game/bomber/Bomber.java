@@ -63,7 +63,7 @@ public class Bomber {
 
     public CrewMember getCrewMemberByRole(CrewPosition role) {
         for (CrewMember crewMember : this.crew) {
-            if (crewMember.getRole() == role) {
+            if (crewMember.getCrewPosition() == role) {
                 return crewMember;
             }
         }
@@ -72,7 +72,7 @@ public class Bomber {
 
     public CrewMember getCrewMemberByDefaultRole(CrewPosition role) {
         for (CrewMember crewMember : this.crew) {
-            if (crewMember.getDefaultRole() == role) {
+            if (crewMember.getDefaultCrewPosition() == role) {
                 return crewMember;
             }
         }

@@ -10,9 +10,9 @@ import java.util.List;
 public class CrewMember {
     private String name;
     // Currently assigned role (Pilot, Navigator, etc)
-    private CrewPosition role;
+    private CrewPosition crewPosition;
     // Role this crew member was trained to do (Pilot, Navigator, etc)
-    private CrewPosition defaultRole;
+    private CrewPosition defaultCrewPosition;
     // Current Location of this Crew Member
     private BomberCompartment bomberCompartment;
     private int kills;
@@ -21,10 +21,10 @@ public class CrewMember {
     private List<CrewAilment> ailments = new ArrayList<>();
     private int numMissionsFlown;
 
-    public CrewMember(String name, CrewPosition defaultRole) {
+    public CrewMember(String name, CrewPosition defaultCrewPosition) {
         this.name = name;
-        this.role = defaultRole;
-        this.defaultRole = defaultRole;
+        this.crewPosition = defaultCrewPosition;
+        this.defaultCrewPosition = defaultCrewPosition;
         this.kills = 0;
         this.status = CrewStatus.OK;
         this.experience = Experience.GREEN;
@@ -40,20 +40,20 @@ public class CrewMember {
         this.name = name;
     }
 
-    public CrewPosition getRole() {
-        return role;
+    public CrewPosition getCrewPosition() {
+        return crewPosition;
     }
 
-    public void setRole(CrewPosition role) {
-        this.role = role;
+    public void setCrewPosition(CrewPosition crewPosition) {
+        this.crewPosition = crewPosition;
     }
 
-    public CrewPosition getDefaultRole() {
-        return defaultRole;
+    public CrewPosition getDefaultCrewPosition() {
+        return defaultCrewPosition;
     }
 
-    public void setDefaultRole(CrewPosition defaultRole) {
-        this.defaultRole = defaultRole;
+    public void setDefaultCrewPosition(CrewPosition defaultCrewPosition) {
+        this.defaultCrewPosition = defaultCrewPosition;
     }
 
     public int getKills() {

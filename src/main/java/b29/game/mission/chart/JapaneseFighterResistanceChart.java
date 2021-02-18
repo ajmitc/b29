@@ -278,8 +278,9 @@ public class JapaneseFighterResistanceChart {
                         !bomber.hasDamage(Damage.ENGINE_4_OUT) &&
                         !bomber.hasDamage(Damage.INTERCOM_FAILURE) &&
                         !bomber.isCarryingBombs() &&
-                        ((!cfcController.isSwOrKia() && bomber.getAreas().get(BomberCompartment.WAIST).getCrewAssignments().get(CrewPosition.CFC_CONTROLLER) == cfcController) ||
-                                (!tailGunner.isSwOrKia() && bomber.getAreas().get(BomberCompartment.TAIL).getCrewAssignments().get(CrewPosition.TAIL_GUNNER) == tailGunner))){
+                        ((!cfcController.isSwOrKia() && cfcController.getCrewPosition() == CrewPosition.CFC_CONTROLLER) ||
+                                (!tailGunner.isSwOrKia() && tailGunner.getCrewPosition() == CrewPosition.TAIL_GUNNER))
+                ){
                     result.fighterApproach = null;
                     result.additionalFighters.clear();
                     return result;
@@ -301,8 +302,8 @@ public class JapaneseFighterResistanceChart {
                         !bomber.hasDamage(Damage.ENGINE_4_OUT) &&
                         !bomber.hasDamage(Damage.INTERCOM_FAILURE) &&
                         !bomber.isCarryingBombs() &&
-                        ((!cfcController.isSwOrKia() && bomber.getAreas().get(BomberCompartment.WAIST).getCrewAssignments().get(CrewPosition.CFC_CONTROLLER) == cfcController) ||
-                                (!tailGunner.isSwOrKia() && bomber.getAreas().get(BomberCompartment.TAIL).getCrewAssignments().get(CrewPosition.TAIL_GUNNER) == tailGunner))){
+                        ((!cfcController.isSwOrKia() && cfcController.getCrewPosition() == CrewPosition.CFC_CONTROLLER) ||
+                                (!tailGunner.isSwOrKia() && tailGunner.getCrewPosition() == CrewPosition.TAIL_GUNNER))){
                     result.fighterApproach = null;
                     result.additionalFighters.clear();
                     return result;

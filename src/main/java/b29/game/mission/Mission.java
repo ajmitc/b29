@@ -4,6 +4,7 @@ import b29.game.bomber.Altitude;
 import b29.game.mission.chart.FighterInfo;
 import b29.game.mission.chart.JapaneseFighterDensity;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,11 +34,8 @@ public class Mission {
     private boolean escortAvailable;
 
     // Temporary variables used to track in-game progress
-    private int numGermanFighterWaves;
-    private int currentGermanFighterWave;
     private int numWaveAttacks;
     private int numFighterDefenseLeft;
-    private List<JapaneseFighter> currentWaveFighters;
     private FighterType escort;
     private Weather weather;
     private FormationAssembly formationAssembly;
@@ -46,7 +44,7 @@ public class Mission {
     private boolean pathfinder;
     private boolean pickleBarrel;
     private boolean ableToPerformEvasiveAction;
-    private List<JapaneseFighter> japaneseFighters;
+    private List<JapaneseFighter> japaneseFighters = new ArrayList<>();
     private boolean spottedBySearchlight;
 
     // Number of turns until bomber regains formation (ie. bomber is out of formation this turn, then regains formation)
@@ -72,18 +70,15 @@ public class Mission {
         //landingModifier = 0;
         direction = Direction.TO_TARGET;
         aborted = false;
-        zone = 1;
+        zone = 0;  // Home Base
         turnsInCurrentZone = 0;
         outOfFormation = true;
         escortAvailable = false;
 
-        numGermanFighterWaves = 0;
-        currentGermanFighterWave = 0;
         numWaveAttacks = 0;
         numFighterDefenseLeft = 0;
-        currentWaveFighters = null;
         escort = null;
-        weather = null;
+        weather = Weather.GOOD;
         formationAssembly = null;
         stormSystemEncountered = false;
         highPressureSystemEncountered = false;
@@ -92,6 +87,15 @@ public class Mission {
         ableToPerformEvasiveAction = true;
         spottedBySearchlight = false;
         numTurnsTillRegainFormation = -1;
+
+        japaneseFighters.add(new JapaneseFighter(new FighterInfo(FighterType.FIGHTER_ZEKE, FighterApproach.AREA_12, FighterAltitude.HIGH)));
+        japaneseFighters.add(new JapaneseFighter(new FighterInfo(FighterType.FIGHTER_TONY, FighterApproach.AREA_12, FighterAltitude.LEVEL)));
+        japaneseFighters.add(new JapaneseFighter(new FighterInfo(FighterType.FIGHTER_TOJO, FighterApproach.AREA_12, FighterAltitude.LOW)));
+        japaneseFighters.add(new JapaneseFighter(new FighterInfo(FighterType.FIGHTER_NICK, FighterApproach.AREA_1_30, FighterAltitude.HIGH)));
+        japaneseFighters.add(new JapaneseFighter(new FighterInfo(FighterType.FIGHTER_OSCAR, FighterApproach.AREA_1_30, FighterAltitude.LEVEL)));
+        japaneseFighters.add(new JapaneseFighter(new FighterInfo(FighterType.FIGHTER_GEORGE, FighterApproach.AREA_1_30, FighterAltitude.LOW)));
+        japaneseFighters.add(new JapaneseFighter(new FighterInfo(FighterType.FIGHTER_FRANK, FighterApproach.VERTICAL_CLIMB, FighterAltitude.LEVEL)));
+        japaneseFighters.add(new JapaneseFighter(new FighterInfo(FighterType.FIGHTER_JACK, FighterApproach.VERTICAL_DIVE, FighterAltitude.LEVEL)));
     }
 
     public int getMissionNumber() {
@@ -224,22 +228,6 @@ public class Mission {
         this.turnsInCurrentZone = turnsInCurrentZone;
     }
 
-    public int getNumGermanFighterWaves() {
-        return numGermanFighterWaves;
-    }
-
-    public void setNumGermanFighterWaves(int numGermanFighterWaves) {
-        this.numGermanFighterWaves = numGermanFighterWaves;
-    }
-
-    public int getCurrentGermanFighterWave() {
-        return currentGermanFighterWave;
-    }
-
-    public void setCurrentGermanFighterWave(int currentGermanFighterWave) {
-        this.currentGermanFighterWave = currentGermanFighterWave;
-    }
-
     public int getNumWaveAttacks() {
         return numWaveAttacks;
     }
@@ -262,14 +250,6 @@ public class Mission {
 
     public void decNumFighterDefenseLeft(){
         this.numFighterDefenseLeft -= 1;
-    }
-
-    public List<JapaneseFighter> getCurrentWaveFighters() {
-        return currentWaveFighters;
-    }
-
-    public void setCurrentWaveFighters(List<JapaneseFighter> currentWaveFighters) {
-        this.currentWaveFighters = currentWaveFighters;
     }
 
     public Altitude getMissionAltitude() {

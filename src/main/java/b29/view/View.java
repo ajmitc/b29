@@ -19,6 +19,11 @@ public class View {
         this.model = model;
         this.frame = frame;
 
+        frame.setSize(Toolkit.getDefaultToolkit().getScreenSize());
+        frame.setLocation(0, 0);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setTitle("B-29 Superfortress");
+
         mainMenuPanel = new MainMenuPanel(model, this);
         gamePanel = new GamePanel(model, this);
 

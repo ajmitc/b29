@@ -278,7 +278,7 @@ public class DefensiveFireTable {
 
         if (gunsFiring == GunPosition.TAIL_TURRET){
             // die -= 1 for each hit on Utility compartment ammunition feed trays
-            int count = (int) bomber.getAreas().get(BomberCompartment.UTILITY).getDamage().stream().filter(d -> d == Damage.AMMUNITION_FEED_TRAY).count();
+            int count = bomber.countDamage(BomberCompartment.UTILITY, Damage.AMMUNITION_FEED_TRAY);
             die -= count;
         }
 

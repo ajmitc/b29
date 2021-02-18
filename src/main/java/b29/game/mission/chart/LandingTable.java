@@ -9,6 +9,7 @@ import b29.util.Util;
  * G-9, G-10
  */
 public class LandingTable {
+    /*
     private static final CrewLandingStatus[] ON_LAND_CREW_STATUS = new CrewLandingStatus[]{
             CrewLandingStatus.KIA,                        // -3
             CrewLandingStatus.ROLL_FOR_WOUNDS_PLUS_ONE,   // -2
@@ -65,4 +66,5 @@ public class LandingTable {
         }
         return ON_WATER[ ON_WATER.length - 1 ];
     }
+     */
 }

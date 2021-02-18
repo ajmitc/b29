@@ -9,7 +9,7 @@ jar {
                 'Implementation-Title': 'B-29 Superfortress',
                 'Implementation-Version': version,
                 "Class-Path": configurations.compile.collect { it.getName() }.join(' '),
-                'Main-Class': 'b17.Main'
+                'Main-Class': 'b29.Main'
         )
     }
     baseName = "B-29"

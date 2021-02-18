@@ -1,9 +1,6 @@
 package b29;
 
-import b29.game.Campaign;
-import b29.game.Experience;
-import b29.game.Phase;
-import b29.game.PhaseStep;
+import b29.game.*;
 import b29.game.bomber.*;
 import b29.game.crew.CrewAilment;
 import b29.game.crew.CrewMember;
@@ -39,16 +36,39 @@ public class Controller {
         this.view.getMainMenuPanel().getBtnNewCampaign().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                model.setGame(new Game());
 
+                Campaign campaign = new Campaign();
+                model.getGame().setCampaign(campaign);
+
+                int missionNumber = model.getGame().getCampaign().getNextMissionNumber();
+                model.getGame().setMission(new Mission(missionNumber));
+                model.getGame().getCampaign().getMissions().add(model.getGame().getMission());
+
+                model.getGame().setBomber(new Bomber());
+                model.getGame().getBomber().createDefaultCrew();
+
+                model.getGame().setPhase(Phase.SETUP_MISSION);
+                view.showGame();
+                view.refresh();
+                //run();
             }
         });
 
+        /*
         this.view.getMainMenuPanel().getBtnNewMission().addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-
+                model.setGame(new Game());
+                model.getGame().setCampaign(null);
+                model.getGame().setMission(null);
+                model.getGame().setBomber(null);
+                model.getGame().setPhase(Phase.SETUP_MISSION);
+                view.showGame();
+                run();
             }
         });
+         */
     }
 
 
@@ -58,19 +78,6 @@ public class Controller {
                 case SETUP_MISSION:{
                     switch (model.getGame().getPhaseStep()){
                         case START_PHASE:
-                            if (model.getGame().getCampaign() == null){
-                                model.getGame().setCampaign(new Campaign());
-                            }
-                            if (model.getGame().getMission() == null){
-                                int missionNumber = model.getGame().getCampaign().getNextMissionNumber();
-                                model.getGame().setMission(new Mission(missionNumber));
-                                model.getGame().getCampaign().getMissions().add(model.getGame().getMission());
-                            }
-                            if (model.getGame().getBomber() == null){
-                                model.getGame().setBomber(new Bomber());
-                                model.getGame().getBomber().createDefaultCrew();
-                            }
-
                             Mission mission = model.getGame().getMission();
 
                             // Get Mission Time Of Day
@@ -101,7 +108,7 @@ public class Controller {
 
                             Bomber bomber = model.getGame().getBomber();
                             // Load fuel tanks
-                            // On any “LO” altitude mission, extra fuel tanks are NOT included unless All gunners and all guns
+                            // On any "LO" altitude mission, extra fuel tanks are NOT included unless All gunners and all guns
                             // are aboard, add auxiliary fuel tanks in the fwd bomb bay
                             // Flying to a designated target in Zones 13 or 14, add auxiliary fuel tanks in the aft bomb bay
                             // If both of the above conditions apply, then auxiliary fuel tanks are considered to be in both bomb bays.
@@ -331,7 +338,7 @@ previous turn from a voluntary depressurization.)
 
 B. DAY Missions
 1. Roll 1D on Table 5-1
-2. If roll on 5-1=”Fighter Attack” then roll on Table 5-2 for type of aircraft
+2. If roll on 5-1="Fighter Attack" then roll on Table 5-2 for type of aircraft
 3. Once type is determined, roll on Table 5-3 for area of attack
 4. Once area is determined, roll on Table 5-4 for angle of attack and place fighter
 5. Once angle is determined, roll on Table 5-5 for type of pilot
@@ -452,7 +459,7 @@ c. Is not otherwise restricted by engine damage
 3. Bailout over base is allowed (Table 8-4)
 D. Iwo Jima (Zone 6) if Friendly (Missions 11-35)
 1. Resolve weather, navigation, and random events in Zone 6 before attempting to land
-2. If weather Is “Good,” roll 1D: 1-4=Good weather for landing; 5-6=Poor weather
+2. If weather Is "Good", roll 1D: 1-4=Good weather for landing; 5-6=Poor weather
 3. If weather is Poor, roll 1D: 1-4=Poor weather for landing; 5-6=Bad weather
 4. Roll for landing on Table 8-1
 5. Bailout over base is allowed (Table 8-4) and if bail out is safe, crewmember is returned to duty
@@ -816,10 +823,10 @@ c. Roll 1D 1-5=Condition discovered in time; 6=KIA
             // Roll 1D, if <= # Crew (CFC, Left Gunner, Right Gunner, Tail Gunner), -1 fuel
             int crewCount = (int) bomber.getCrew().stream()
                     .filter(crew -> !crew.isSwOrKia())
-                    .filter(crew -> crew.getDefaultRole() == CrewPosition.CFC_CONTROLLER ||
-                            crew.getDefaultRole() == CrewPosition.LEFT_GUNNER ||
-                            crew.getDefaultRole() == CrewPosition.RIGHT_GUNNER ||
-                            crew.getDefaultRole() == CrewPosition.TAIL_GUNNER).count();
+                    .filter(crew -> crew.getDefaultCrewPosition() == CrewPosition.CFC_CONTROLLER ||
+                            crew.getDefaultCrewPosition() == CrewPosition.LEFT_GUNNER ||
+                            crew.getDefaultCrewPosition() == CrewPosition.RIGHT_GUNNER ||
+                            crew.getDefaultCrewPosition() == CrewPosition.TAIL_GUNNER).count();
             if (Util.roll() <= crewCount)
                 fuelConsumed += 1;
         }
@@ -1096,11 +1103,11 @@ c. Roll 1D 1-5=Condition discovered in time; 6=KIA
         /*
         TODO SUCCESSIVE ATTACKS
 A. For any Frank or Tojo fighter which scores a hit in its initial attack on the B-29 (even if the
-hit has no effect) and was not damaged (“FCA”) during the attack, roll 1D: “1-3” = no effect,
-remove the fighter from the board, “4-6” = fighter is able and willing to attack the B-29 again
+hit has no effect) and was not damaged ("FCA") during the attack, roll 1D: "1-3" = no effect,
+remove the fighter from the board, "4-6" = fighter is able and willing to attack the B-29 again
 (assuming, of course, it did not collide with the B-29). Note that undamaged Nick,
 Tony, Zeke, Oscar, and George fighters may only make a die roll for successive attacks if the B-
-29 is “out of formation”, and one or more of the B-29’s engines are out. Fighters not scoring hitsnever roll for successive attacks (Irving fighters do not appear on “Day” Missions and are
+29 is "out of formation", and one or more of the B-29’s engines are out. Fighters not scoring hitsnever roll for successive attacks (Irving fighters do not appear on "Day" Missions and are
 unaffected by this rule). For each fighter eligible to make a successive attack, roll once on Table
 5-13, under one of two columns (depending on whether or not all B-29 engines are operating), to
 determine the fighter’s new attack position. After any and all fighters conducting a successive
@@ -1108,8 +1115,8 @@ attack are positioned, resolve combat normally using Tables 5-6 through 5-12. Al
 collision normally on successive attacks (see
 Section 5.5 above). Fighters not scoring a hit during this attack are removed from play.
 C. A fighter normally does not conduct a second successive attack unless it scored a hit during
-the first successive attack, and the B-29 is “out of formation”, and one or more of the B-29’s
-engines are out, and the fighter has not suffered a “FCA” result—if all four conditions apply, roll
+the first successive attack, and the B-29 is "out of formation", and one or more of the B-29’s
+engines are out, and the fighter has not suffered a "FCA" result—if all four conditions apply, roll
 1D again per the provision of paragraph a. above and, if eligible
 for another successful attack, roll 2D on the second column of Table 5-13. After any second
 attack, a fighter is removed from play even if it scores a hit every time. The most attacks any one
@@ -1126,9 +1133,9 @@ attacks.
             return;
         // TODO Implement this
         /*
-        COMBAT PROCEDURE – “NIGHT”
+        COMBAT PROCEDURE – "NIGHT"
 MISSIONS
-On “Night” missions, roll on Table 2-7 for gunner allocation prior to take off.
+On "Night" missions, roll on Table 2-7 for gunner allocation prior to take off.
 At the Designated Target Zone (only), roll on Table 5-14 to determine if your bomber has been
 spotted by searchlight (EXCEPTION: do NOT make this roll if the target city is asterisked on
 Table 2-9). If the B-29 is spotted and fixed, then it remains so for the remainder of the turn
@@ -1136,25 +1143,26 @@ Table 2-9). If the B-29 is spotted and fixed, then it remains so for the remaind
 within the Designated Target Zone next turn, roll normally on Table 5-14—there are no special
 modifiers for having been successfully spotted the previous turn.
 Night fighters always attack from the 6 o’clock position. Roll 1D for each night fighter to see if
-the fighter is spotted (subtract -1 if any gunners besides just the tail gunner are aboard, even as“observers”): “1-2” = attacking fighter spotted; “3-6” = attacking fighter approaches unseen. If a
+the fighter is spotted (subtract -1 if any gunners besides just the tail gunner are aboard, even as
+"observers"): "1-2" = attacking fighter spotted; "3-6" = attacking fighter approaches unseen. If a
 fighter is spotted and the intercom is working, then the bomber may take
-“Evasive Action” after defensive fire, but before Japanese offensive fire. This means that the
-fighter(s) will be affected by the “Evasive Action” modifier, but the gunner(s) will not (at least
+"Evasive Action" after defensive fire, but before Japanese offensive fire. This means that the
+fighter(s) will be affected by the "Evasive Action" modifier, but the gunner(s) will not (at least
 for the Initial attack). (EXCEPTION: if within the Designated Target Zone and the B-29
-performed “Evasive Action” in an attempt to avoid being fixed by Japanese searchlight, then the
-bomber gunner(s) are affected by the “Evasive Action” modifier.)
+performed "Evasive Action" in an attempt to avoid being fixed by Japanese searchlight, then the
+bomber gunner(s) are affected by the "Evasive Action" modifier.)
 Defensive fire may never be resolved against a fighter not spotted. If no Japanese fighter is
 spotted, the fighter(s) may fire first, with B-29 defensive fire resolved after the
 effects of Japanese offensive fire are applied (at that time, any fighter is automatically spotted).
 A Japanese Nick night fighter will always make one (and only one) successive attack unless it
-was destroyed or received a “FCA” damage result on Table 5-8. An undamaged Irving night
+was destroyed or received a "FCA" damage result on Table 5-8. An undamaged Irving night
 fighter will not make a successive attack unless one or more of the B-29’s engines are out (in the
 event of a coordinated attack, only one fighter may make a successive attack if eligible—any
 others may not; select only an undamaged fighter for the attack). In either case, use the Vertical
 Climb position for the Successive attack (the fighter is automatically
 considered spotted for this round of combat).
 thermal turbulence: Urban Area mission against a target listed on Table 2-2C (not Table 2-3
-targets) at “LO” altitude (only!), roll 1D on Table 6-8 (and, if necessary, Table 6-9) to determine
+targets) at "LO" altitude (only!), roll 1D on Table 6-8 (and, if necessary, Table 6-9) to determine
 if B-29 encounters thermal turbulence from incendiary caused fires.
          */
     }
@@ -1228,10 +1236,10 @@ if B-29 encounters thermal turbulence from incendiary caused fires.
         TODO IWO JIMA A B-29 in Zone 6 may attempt to land at Iwo Jima if available as a friendly base
 (Missions #11- 35). Resolve weather (Section 4.4), navigation (Section 4.5), and random event
 (Section 4.6) in Zone 6 before attempting to land. Iwo Jima was often subject to fog,
-making landings there more difficult. Accordingly, if “Weather in Zone” for Zone 6 (Table 4-2)
-was “Good”, roll 1D and apply the following: “1-4” = “Good” weather for landing, “5-6” =
-“Poor” weather for landing. If “Weather in Zone” for Zone 6 (Table 4-2) was “Poor”, roll 1D and
-apply the following: “1-4” = “Poor” weather for landing, “5-6” = “Bad”
+making landings there more difficult. Accordingly, if "Weather in Zone" for Zone 6 (Table 4-2)
+was "Good", roll 1D and apply the following: "1-4" = "Good" weather for landing, "5-6" =
+"Poor" weather for landing. If "Weather in Zone" for Zone 6 (Table 4-2) was "Poor", roll 1D and
+apply the following: "1-4" = "Poor" weather for landing, "5-6" = "Bad"
 weather for landing.
 
          */
@@ -1411,16 +1419,16 @@ measured with Tables 9-2 and 9-3
         /*
         OXYGEN OUT
 Keep a record of all oxygen system hits on the Mission Log Sheet. When the plane’s or a crew
-member’s oxygen is knocked out, the B-29 must descend to “LO” altitude (and “Out of
-Formation”, if applicable) on the next turn.
-(EXCEPTION: a descent to “LO” altitude is not required if it is possible to re-pressurize all
-occupied compartments.) In the event of oxygen loss to just a single crewmember, if a “vacancy”
+member’s oxygen is knocked out, the B-29 must descend to "LO" altitude (and "Out of
+Formation", if applicable) on the next turn.
+(EXCEPTION: a descent to "LO" altitude is not required if it is possible to re-pressurize all
+occupied compartments.) In the event of oxygen loss to just a single crewmember, if a "vacancy"
 exists somewhere else in the aircraft due to the death of another crewman, the crew member with
-no oxygen can occupy that position and the B-29 can remain at “MED” or “HI” altitude (and in
+no oxygen can occupy that position and the B-29 can remain at "MED" or "HI" altitude (and in
 formation, if applicable). Similarly, if a B-29 is forced down to
-“LO” altitude by a crewmember oxygen outage, and later, due to the death of a crewmember or
+"LO" altitude by a crewmember oxygen outage, and later, due to the death of a crewmember or
 members, there is enough vacant functioning oxygen supply to accommodate all surviving
-crewmembers, then the B-29 may re-ascend to “MED” and “HI” altitude
+crewmembers, then the B-29 may re-ascend to "MED" and "HI" altitude
 (but may not rejoin formation in this case, if applicable).
          */
 
@@ -1463,25 +1471,26 @@ Formation.
         // TODO Implement this
         /*
         FROSTBITE Frostbite can occur in two situations:
-• If pressurization capability (see Section 4.2) is compromised in any individual compartment—i.e., due to result from Damage Tables 7-1, 7-2, 7-6, 7-7, 7-8, or “Gunner Blister Blow-out” on
-Table 4-9—the B-29 may travel one more turn (beyond the current one) at “MED” or “HI”
+• If pressurization capability (see Section 4.2) is compromised in any individual compartment—i.e.,
+due to result from Damage Tables 7-1, 7-2, 7-6, 7-7, 7-8, or "Gunner Blister Blow-out" on
+Table 4-9—the B-29 may travel one more turn (beyond the current one) at "MED" or "HI"
 altitude (if applicable) and in formation (if applicable). Thereafter, the B-29 must immediately
-descend to “LO” altitude (and “Out of Formation”, if applicable) for warmth, or risk frostbite to
+descend to "LO" altitude (and "Out of Formation", if applicable) for warmth, or risk frostbite to
 crewmembers in the affected compartment(s). Of course, if the affected compartment is not
 occupied by living crewmembers, there is no frostbite risk. If living crewmembers remain in a
-compartment where pressurization capability is compromised and the B-29 remains at “MED” or
-“HI” altitude beyond one turn, check for frostbite by rolling at the beginning of each turn (after
+compartment where pressurization capability is compromised and the B-29 remains at "MED" or
+"HI" altitude beyond one turn, check for frostbite by rolling at the beginning of each turn (after
 movement) on Table 7-14 for each crewman in the affected compartment. Crewmembers in a
 non-affected compartment do not suffer frostbite.
 • If pressurization capability is lost throughout the B-29—i.e., due to result from Damage Tables
 7- 3, 7-4, 7-5, or 7-10 (including any reference to Table 7-10 from Table 4.9)—or if the B-29 has
 been voluntarily depressurized and not repressurized for any reason, the B-29 may travel one
-more turn (beyond the current one) at “MED” or “HI” altitude (if applicable) and in formation (if
+more turn (beyond the current one) at "MED" or "HI" altitude (if applicable) and in formation (if
 applicable). Thereafter, to avoid risk of frostbite to crewmembers in all compartment(s), the B-29
-must be re-pressurized (if able) or immediately descend to “LO” altitude (and “Out of
-Formation”, if applicable) for warmth. If the B-29 remains unpressurized at “MED” or “HI”
+must be re-pressurized (if able) or immediately descend to "LO" altitude (and "Out of
+Formation", if applicable) for warmth. If the B-29 remains unpressurized at "MED" or "HI"
 altitude beyond one turn, check for the possibility of frostbite by rolling one die at the beginning
-of each turn (after movement). On a result of “1” at “MED” altitude, or “1-2” at “HI” altitude,
+of each turn (after movement). On a result of "1" at "MED" altitude, or "1-2" at "HI" altitude,
 roll on Table 7-14 for each and every crewman in the aircraft. (On any other result, there is no
 possibility of frostbite this turn.)
 Once a crewmember is frostbitten, he remains so for the remainder of the mission. Frostbitten
@@ -1506,14 +1515,14 @@ NO duties.
     private void handleEvasiveAction(){
         // TODO Implement this somewhere
         /*
-        “Evasive Action” is only allowed for B-29s flying “Out of Formation” or “Night” Missions.
-“Evasive Action” provides a negative modifier to B-29 defensive fire (Table 5-7) and Japanese
+        "Evasive Action" is only allowed for B-29s flying "Out of Formation" or "Night" Missions.
+"Evasive Action" provides a negative modifier to B-29 defensive fire (Table 5-7) and Japanese
 offensive fire (Table 5-9) and Japanese searchlights (Table 5- 14), may reduce the chance of mid-
 air collision (see Section 5.5) and may reduce bombing accuracy
-(see Table 6-6). No “Evasive Action” is allowed if: • B-29 is in formation • Two or more engines
+(see Table 6-6). No "Evasive Action" is allowed if: • B-29 is in formation • Two or more engines
 are out • Electrical system is out (see Table 7-10) • Anyone other than the Pilot or Copilot is
 flying the plane (see Section 7.6) • Any damage previously received that specifically prohibits
-“Evasive Action.”
+"Evasive Action."
          */
         int totalEnginesOut = model.getGame().getBomber().countEnginesOut();
         if (totalEnginesOut == 2 || totalEnginesOut == 3){
@@ -1529,7 +1538,7 @@ flying the plane (see Section 7.6) • Any damage previously received that speci
 Section 4.8) if it jettisons its bombs immediately. If the B-29 is already in the Designated Target
 Zone when the engine is knocked out, it may bomb the target and still remain in formation.
 Otherwise, if the B-29 keeps its bombs aboard and continues to the target with one engine out, it
-may not join formation or, if already in formation, drops “Out of Formation” (if applicable). A B-
+may not join formation or, if already in formation, drops "Out of Formation" (if applicable). A B-
 29 with one engine out and bombs aboard may not
 climb in altitude (see Section 4.1) and must spend two turns in each Zone due to slowness caused
 by the weight of the bombs. There is no additional fuel cost. Once the B-29 drops its bombs, it
@@ -1537,20 +1546,20 @@ may continue its mission at the normal rate of speed of one Zone per turn and re
 to climb in altitude. When landing with one engine out, subtract -1 from the landing roll on
 Tables 8-1 and 8-2
 • TWO OR THREE ENGINES OUT The B-29 must jettison its bombs and auxiliary fuel tanks,
-drop “Out of Formation” (if applicable), and spend two turns in each Zone due to slowing (note
+drop "Out of Formation" (if applicable), and spend two turns in each Zone due to slowing (note
 that a B-29 is never required to spend more than two turns in one Zone, except when accounting
 for turn around, see Section 6.5). There is no additional fuel cost. A
-B-29 with two or more engines out and at “HI” altitude must drop to “MED” altitude, while a B-
-29 at “MED” altitude must drop to “LO” altitude (a B- 29 at “HI” is not required to drop to “LO”
+B-29 with two or more engines out and at "HI" altitude must drop to "MED" altitude, while a B-
+29 at "MED" altitude must drop to "LO" altitude (a B- 29 at "HI" is not required to drop to "LO"
 on the same turn; this descent can be done in two turns). Note that if both inboard engines (#2 and
 #3) are out, pressurization capability is lost (see Section 4.2). When a B-29 has two or moreengines out, attacking fighters add one (+1) to their Japanese Offensive Fire dice rolls. A B-29
-with two or more engines out may not take “Evasive Action” (see
+with two or more engines out may not take "Evasive Action" (see
 Section 5.7). When landing with two engines out, subtract -2 from the landing roll on Tables 8-1
 and 8-2
-• ONE ENGINE OPERATING If at “LO” altitude, the B-29 must either land immediately or
-the crew must bail out on Table 8-4. If at “MED” altitude, the B-29 may enter the next Zone
+• ONE ENGINE OPERATING If at "LO" altitude, the B-29 must either land immediately or
+the crew must bail out on Table 8-4. If at "MED" altitude, the B-29 may enter the next Zone
 (spending two turns in the current Zone), then it must either immediately land or the crew must
-bail out on Table 8-4. If at “HI” altitude, the B-29 may enter the next Zone (spending two turns
+bail out on Table 8-4. If at "HI" altitude, the B-29 may enter the next Zone (spending two turns
 there) and then one more Zone beyond it, then it must either immediately land
 or the crew must bail out on Table 8-4. When landing with only one engine, subtract -3 from the
 landing roll on Tables 8-1 and 8-2. Also, see above for additional effects.
@@ -1562,7 +1571,7 @@ to attempt the crash landing or bail out. If crash landing with all engines out,
 modifier on Tables 8-1 and 8-3 for all engines out as well as the modifiers for elevators, rudder,
 ailerons, and wing flaps being inoperable. In addition, the landing gear may not be lowered (if not
 already lowered). Also, see above for additional effects.
-Note that the “20 th Air Force Base” square counts as a Zone for purpose of this rule.
+Note that the "20 th Air Force Base" square counts as a Zone for purpose of this rule.
          */
 
         Mission mission = model.getGame().getMission();

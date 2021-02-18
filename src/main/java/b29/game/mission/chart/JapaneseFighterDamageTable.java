@@ -11,6 +11,7 @@ import b29.util.Util;
 public class JapaneseFighterDamageTable {
 
     public static JapaneseFighterDamage get(GunPosition gun, FighterType fighter) {
+        /*
         int r = Util.roll();
         if (fighter != FighterType.FIGHTER_190 && (gun == GunPosition.TOP_TURRET || gun == GunPosition.BALL_TURRET || gun == GunPosition.TAIL_TURRET)) {
             r += 1;
@@ -22,6 +23,7 @@ public class JapaneseFighterDamageTable {
             return JapaneseFighterDamage.FCA;
         if (r <= 4)
             return JapaneseFighterDamage.FBOA;
+         */
         return JapaneseFighterDamage.DESTROYED;
     }
 
