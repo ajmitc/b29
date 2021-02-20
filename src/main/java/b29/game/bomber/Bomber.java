@@ -15,7 +15,10 @@ public class Bomber {
     private List<CrewMember> crew = new ArrayList<>();
     private Map<GunPosition, Gun> guns = new HashMap<>();
     private Altitude altitude;
-    private Pressurization pressurization;
+    private Pressurization pressurizationSystem;
+    // Determine if each compartment is pressurized
+    private Map<BomberCompartment, Boolean> compartmentPressurization = new HashMap<>();
+    private boolean voluntaryDepressurization;
     private boolean carryingBombs;
     private boolean underControl;
     private Course course;
@@ -23,6 +26,7 @@ public class Bomber {
     private int fuelLeft;
     private int auxAftFuelLeft;
     private int auxFwdFuelLeft;
+    private BrakeCapability brakeCapability;
 
     private Map<CrewPosition, List<Damage>> crewPositionDamage = new HashMap<>();
     private Map<BomberCompartment, List<Damage>> compartmentDamage = new HashMap<>();
@@ -37,13 +41,15 @@ public class Bomber {
         });
         Arrays.stream(BomberCompartment.values()).forEach(bomberCompartment -> {
             compartmentDamage.put(bomberCompartment, new ArrayList<>());
+            compartmentPressurization.put(bomberCompartment, false);
         });
         Arrays.stream(GunPosition.values()).forEach(gunPosition -> {
             guns.put(gunPosition, new Gun(gunPosition, getMaxAmmo(gunPosition)));
         });
 
         this.altitude = Altitude.LO;
-        this.pressurization = Pressurization.OFF;
+        this.pressurizationSystem = Pressurization.OFF;
+        this.voluntaryDepressurization = true;
         this.carryingBombs = true;
         this.underControl = true;
         this.course = Course.ON_COURSE;
@@ -51,6 +57,7 @@ public class Bomber {
         this.fuelLeft = DEFAULT_MAX_FUEL;
         this.auxAftFuelLeft = DEFAULT_AUX_MAX_FUEL;
         this.auxFwdFuelLeft = DEFAULT_AUX_MAX_FUEL;
+        this.brakeCapability = BrakeCapability.NOMINAL;
     }
 
     public void createDefaultCrew(){
@@ -241,12 +248,41 @@ public class Bomber {
         this.altitude = altitude;
     }
 
-    public Pressurization getPressurization() {
-        return pressurization;
+    public Pressurization getPressurizationSystem() {
+        return pressurizationSystem;
     }
 
-    public void setPressurization(Pressurization pressurization) {
-        this.pressurization = pressurization;
+    public void setPressurizationSystem(Pressurization pressurizationSystem) {
+        // If the aircraft was pressurized and now it's set to INOP, then the pressurization system must have
+        // been damaged, set voluntary depressurization to false
+        if (this.pressurizationSystem == Pressurization.ON && pressurizationSystem == Pressurization.INOP)
+            voluntaryDepressurization = false;
+
+        this.pressurizationSystem = pressurizationSystem;
+
+        if (pressurizationSystem == Pressurization.ON){
+            for (BomberCompartment bomberCompartment: BomberCompartment.values()){
+                setCompartmentPressurization(bomberCompartment, true);
+            }
+        }
+        else { // OFF or INOP
+            for (BomberCompartment bomberCompartment: BomberCompartment.values()){
+                setCompartmentPressurization(bomberCompartment, false);
+            }
+        }
+    }
+
+    public boolean isCompartmentPressurized(BomberCompartment bomberCompartment){
+        return compartmentPressurization.get(bomberCompartment);
+    }
+
+    public void setCompartmentPressurization(BomberCompartment bomberCompartment, boolean pressurized){
+        if (!pressurized || !hasDamage(bomberCompartment, Damage.PRESSURIZATION_FAILURE))
+            compartmentPressurization.put(bomberCompartment, pressurized);
+    }
+
+    public boolean isVoluntaryDepressurization() {
+        return voluntaryDepressurization;
     }
 
     public boolean isCarryingBombs() {
@@ -313,11 +349,23 @@ public class Bomber {
         this.auxFwdFuelLeft = auxFwdFuelLeft;
     }
 
+    public int getTotalFuelLeft(){
+        return fuelLeft + auxAftFuelLeft + auxFwdFuelLeft;
+    }
+
     public Map<CrewPosition, List<Damage>> getCrewPositionDamage() {
         return crewPositionDamage;
     }
 
     public Map<BomberCompartment, List<Damage>> getCompartmentDamage() {
         return compartmentDamage;
+    }
+
+    public BrakeCapability getBrakeCapability() {
+        return brakeCapability;
+    }
+
+    public void setBrakeCapability(BrakeCapability brakeCapability) {
+        this.brakeCapability = brakeCapability;
     }
 }

@@ -16,9 +16,9 @@ public class CrewMember {
     // Current Location of this Crew Member
     private BomberCompartment bomberCompartment;
     private int kills;
-    private CrewStatus status;
     private Experience experience;
     private List<CrewAilment> ailments = new ArrayList<>();
+    private List<CrewStatus> wounds = new ArrayList<>();
     private int numMissionsFlown;
 
     public CrewMember(String name, CrewPosition defaultCrewPosition) {
@@ -26,11 +26,46 @@ public class CrewMember {
         this.crewPosition = defaultCrewPosition;
         this.defaultCrewPosition = defaultCrewPosition;
         this.kills = 0;
-        this.status = CrewStatus.OK;
         this.experience = Experience.GREEN;
         this.numMissionsFlown = 0;
         this.bomberCompartment = null;
     }
+
+    /**
+     * Return the crew member's overall status, based on wounds. Consolidate wounds as necessary.
+     * @return
+     */
+    public CrewStatus getStatus() {
+        if (hasWound(CrewStatus.KIA))
+            return CrewStatus.KIA;
+        int lw = countWounds(CrewStatus.LIGHT_WOUND);
+        // 4 Light Wounds == KIA
+        if (lw >= 4){
+            wounds.add(CrewStatus.KIA);
+            return CrewStatus.KIA;
+        }
+        // 3 Light Wounds == 1 Serious Wound
+        if (lw == 3){
+            wounds.remove(CrewStatus.LIGHT_WOUND);
+            wounds.remove(CrewStatus.LIGHT_WOUND);
+            wounds.remove(CrewStatus.LIGHT_WOUND);
+            wounds.add(CrewStatus.SERIOUS_WOUND);
+            lw = countWounds(CrewStatus.LIGHT_WOUND);
+        }
+        // 1 Light Wound + 1 Serious Wound == KIA
+        // 1+ Serious Wounds == KIA
+        int sw = countWounds(CrewStatus.SERIOUS_WOUND);
+        if ((lw > 0 && sw > 0) || sw > 1){
+            wounds.add(CrewStatus.KIA);
+            return CrewStatus.KIA;
+        }
+        if (sw > 0)
+            return CrewStatus.SERIOUS_WOUND;
+        if (lw > 0)
+            return CrewStatus.LIGHT_WOUND;
+        return CrewStatus.OK;
+    }
+
 
     public String getName() {
         return name;
@@ -64,15 +99,8 @@ public class CrewMember {
         this.kills = kills;
     }
 
-    public CrewStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(CrewStatus status) {
-        this.status = status;
-    }
-
     public boolean isSwOrKia() {
+        CrewStatus status = getStatus();
         return status == CrewStatus.SERIOUS_WOUND || status == CrewStatus.KIA;
     }
 
@@ -86,6 +114,23 @@ public class CrewMember {
 
     public List<CrewAilment> getAilments() {
         return ailments;
+    }
+
+    public List<CrewStatus> getWounds() {
+        return wounds;
+    }
+
+    public CrewStatus addWound(CrewStatus wound){
+        wounds.add(wound);
+        return getStatus();
+    }
+
+    public int countWounds(CrewStatus wound){
+        return (int) wounds.stream().filter(w -> w == wound).count();
+    }
+
+    public boolean hasWound(CrewStatus wound){
+        return wounds.contains(wound);
     }
 
     public int getNumMissionsFlown() {

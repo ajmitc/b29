@@ -12,7 +12,7 @@ public class Gun {
     // In-game state
     private boolean fireThisTurn;
 
-    public Gun( GunPosition position, int maxAmmo ) {
+    public Gun(GunPosition position, int maxAmmo) {
         this.position = position;
         this.crewMember = null;
         this.maxAmmo = maxAmmo;
@@ -26,7 +26,7 @@ public class Gun {
         return position;
     }
 
-    public void setPosition( GunPosition position ) {
+    public void setPosition(GunPosition position) {
         this.position = position;
     }
 
@@ -34,7 +34,7 @@ public class Gun {
         return crewMember;
     }
 
-    public void setCrewMember( CrewMember crewMember ) {
+    public void setCrewMember(CrewMember crewMember) {
         this.crewMember = crewMember;
     }
 
@@ -42,7 +42,7 @@ public class Gun {
         return maxAmmo;
     }
 
-    public void setMaxAmmo( int maxAmmo ) {
+    public void setMaxAmmo(int maxAmmo) {
         this.maxAmmo = maxAmmo;
     }
 
@@ -50,8 +50,16 @@ public class Gun {
         return ammoRemaining;
     }
 
-    public void setAmmoRemaining( int ammoRemaining ) {
+    public void setAmmoRemaining(int ammoRemaining) {
         this.ammoRemaining = ammoRemaining;
+    }
+
+    public void adjAmmoRemaining(int amount) {
+        this.ammoRemaining += amount;
+        if (this.ammoRemaining < 0)
+            this.ammoRemaining = 0;
+        if (this.ammoRemaining > maxAmmo)
+            this.ammoRemaining = maxAmmo;
     }
 
     public boolean isOperational() {

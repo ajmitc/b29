@@ -3,6 +3,7 @@ package b29;
 import b29.game.*;
 import b29.game.bomber.*;
 import b29.game.crew.CrewAilment;
+import b29.game.crew.CrewLandingStatus;
 import b29.game.crew.CrewMember;
 import b29.game.crew.CrewStatus;
 import b29.game.mission.*;
@@ -82,6 +83,18 @@ public class Controller {
 
                             // Get Mission Time Of Day
                             mission.setMissionTimeOfDay(MissionSetupTable.getMissionTimeOfDay(mission.getMissionNumber()));
+
+                            TakeOffLandingChart.TakeOffLandingTimesInfo takeOffLandingTimesInfo =
+                                    TakeOffLandingChart.getTakeoffLandingTimeOfDayInfo(mission.getMissionTimeOfDay(), mission.getMissionNumber());
+                            mission.setBaseTakeoffTimeOfDay(takeOffLandingTimesInfo.baseTakeoff);
+                            mission.setExpectedLandingTimeOfDay(takeOffLandingTimesInfo.expectedBaseLanding);
+                            mission.setAbortOutMinDayZone(takeOffLandingTimesInfo.abortOutMinDayZone);
+                            mission.setAbortOutMaxDayZone(takeOffLandingTimesInfo.abortOutMaxDayZone);
+                            mission.setDitchOutMinDayZone(takeOffLandingTimesInfo.ditchOutMinDayZone);
+                            mission.setDitchOutMaxDayZone(takeOffLandingTimesInfo.ditchOutMaxDayZone);
+                            mission.setDitchBackMinDayZone(takeOffLandingTimesInfo.ditchBackMinDayZone);
+                            mission.setDitchBackMaxDayZone(takeOffLandingTimesInfo.ditchBackMaxDayZone);
+
 
                             // Set Target
                             MissionSetupTable.TargetInfo targetInfo = MissionSetupTable.getMissionTarget(mission.getMissionNumber(), mission.getMissionTimeOfDay());
@@ -228,6 +241,12 @@ public class Controller {
 
                                 // TODO If any crew member has no oxygen, must descend to LO altitude
 
+                                // TODO If intercom is out and B-29 voluntarily or involuntarily engages in a shallow
+                                //  or steep dive (ie. result of possible collision) or in an attempt to extinguish an
+                                //  engine or fuel tank fire, roll 1D for each crewmember in any compartment OTHER THAN
+                                //  the Nose and Nav/Radio compartments: 1-3 = crewmember bails out on Table 8-4; 4-6 =
+                                //  crewmember stays put.  (from Table 7-9 Note b)
+
                                 if (mission.getZone() < 3 && bomber.getAltitude() != goalAltitude) {
                                     if (goalAltitude.ordinal() > bomber.getAltitude().ordinal()) {
                                         // Ascend
@@ -275,6 +294,7 @@ stay in their seats.
 choice being Flt. Engr. If he is seriously wounded or KIA anyone else may take over. Landing is
 subject to modifiers on Tables 8-1 and 8-2.
          */
+                            // TODO Pilot and Copilot may switch positions at any time without penalty
                             model.getGame().setPhaseStep(PhaseStep.PLAY_MISSION_CONSUME_FUEL);
                             break;
                         case PLAY_MISSION_CONSUME_FUEL:
@@ -508,16 +528,16 @@ F. Sea: Ditching is necessary if a forced landing must be made in Zones 1-9 or i
     private void handlePressurization() {
         Bomber bomber = model.getGame().getBomber();
 
-        if (bomber.getPressurization() != Pressurization.INOP) {
+        if (bomber.getPressurizationSystem() != Pressurization.INOP) {
             // If altitude changed from LO <-> MED, auto de/pressurize
             if (altitudeChange > 0 && bomber.getAltitude() == Altitude.MED) {
-                bomber.setPressurization(Pressurization.ON);
+                bomber.setPressurizationSystem(Pressurization.ON);
             } else if (altitudeChange < 0 && bomber.getAltitude() == Altitude.LO) {
-                bomber.setPressurization(Pressurization.OFF);
+                bomber.setPressurizationSystem(Pressurization.OFF);
             }
         }
 
-        if (bomber.getAltitude() != Altitude.LO && bomber.getPressurization() != Pressurization.ON) {
+        if (bomber.getAltitude() != Altitude.LO && bomber.getPressurizationSystem() != Pressurization.ON) {
             ViewUtil.popupNotify("Altitude at MED or HI and no pressurization!");
             int die = Util.roll2d();
             if (bomber.hasDamage(Damage.INTERCOM_FAILURE))
@@ -572,7 +592,7 @@ F. Sea: Ditching is necessary if a forced landing must be made in Zones 1-9 or i
                     } else {
                         // crewman’s condition is discovered too late, he has died as a result of anoxia (KIA)
                         ViewUtil.popupNotify(crewMember.getName() + " discovered too late and has died of anoxia!.");
-                        crewMember.setStatus(CrewStatus.KIA);
+                        crewMember.addWound(CrewStatus.KIA);
                     }
                 }
                 else
@@ -790,7 +810,7 @@ c. Roll 1D 1-5=Condition discovered in time; 6=KIA
                     // Explosion, plane destroyed, crew KIA
                     ViewUtil.popupNotify("Explosion!  B-29 destroyed!  Crew KIA!");
                     model.getGame().getBomber().setBomberStatus(BomberStatus.WRECKED);
-                    model.getGame().getBomber().getCrew().stream().forEach(crew -> crew.setStatus(CrewStatus.KIA));
+                    model.getGame().getBomber().getCrew().stream().forEach(crew -> crew.addWound(CrewStatus.KIA));
                 }
             }
         }
@@ -893,12 +913,12 @@ c. Roll 1D 1-5=Condition discovered in time; 6=KIA
                 continue;
             else if (die <= 4){
                 // Mild Food Poisoning
-                crewMember.setStatus(CrewStatus.LIGHT_WOUND);
+                crewMember.addWound(CrewStatus.LIGHT_WOUND);
                 crewMember.getAilments().add(CrewAilment.FOOD_POISONING);
             }
             else {
                 // Severe Food Poisoning
-                crewMember.setStatus(CrewStatus.SERIOUS_WOUND);
+                crewMember.addWound(CrewStatus.SERIOUS_WOUND);
                 crewMember.getAilments().add(CrewAilment.FOOD_POISONING);
                 // Out for remainder of mission, but recovers for next mission
             }
@@ -1179,7 +1199,7 @@ if B-29 encounters thermal turbulence from incendiary caused fires.
         Bomber bomber = model.getGame().getBomber();
         bomber.setBomberStatus(BomberStatus.WRECKED);
         if (crewKIA)
-            bomber.getCrew().stream().forEach(crew -> crew.setStatus(CrewStatus.KIA));
+            bomber.getCrew().stream().forEach(crew -> crew.addWound(CrewStatus.KIA));
         else
             handleBailingOut();
     }
@@ -1187,15 +1207,65 @@ if B-29 encounters thermal turbulence from incendiary caused fires.
     private void handleBailingOut(){
         Bomber bomber = model.getGame().getBomber();
         Mission mission = model.getGame().getMission();
-        if (bomber.getPressurization() == Pressurization.ON){
+        if (bomber.getPressurizationSystem() == Pressurization.ON){
             // TODO Consult Section 8.2
         }
 
         if (bomber.isUnderControl()){
-            // TODO Roll on 8-4
+            // Roll on 8-4
+            for (CrewMember crewMember: bomber.getCrew()) {
+                if (crewMember.isSwOrKia()) {
+                    ViewUtil.popupNotify(crewMember.getName() + " (" + crewMember.getDefaultCrewPosition() + ") goes down with plane");
+                    continue;
+                }
+                BailOutStatus bailOutStatus = LandingTable.getControlledBailOutStatus(bomber, crewMember);
+                if (bailOutStatus == BailOutStatus.CREWMEMBER_KIA){
+                    crewMember.addWound(CrewStatus.KIA);
+                    ViewUtil.popupNotify(crewMember.getName() + " (" + crewMember.getDefaultCrewPosition() + ") killed in accident");
+                }
+                else
+                    ViewUtil.popupNotify(crewMember.getName() + " (" + crewMember.getDefaultCrewPosition() + ") bail out OK");
+            }
         }
         else {
-            // TODO Roll on 8-5
+            // Roll on 8-5
+            for (CrewMember crewMember: bomber.getCrew()) {
+                if (crewMember.isSwOrKia()) {
+                    ViewUtil.popupNotify(crewMember.getName() + " (" + crewMember.getDefaultCrewPosition() + ") goes down with plane");
+                    continue;
+                }
+                BailOutStatus bailOutStatus = LandingTable.getUncontrolledBailOutStatus();
+                if (bailOutStatus == BailOutStatus.CREWMEMBER_KIA){
+                    crewMember.addWound(CrewStatus.KIA);
+                    ViewUtil.popupNotify(crewMember.getName() + " (" + crewMember.getDefaultCrewPosition() + ") goes down with plane");
+                }
+                else
+                    ViewUtil.popupNotify(crewMember.getName() + " (" + crewMember.getDefaultCrewPosition() + ") bail out OK");
+            }
+        }
+
+        // If pressurization ON, roll on Table 7-11 (BomberDamageTable) for explosive decompression for any
+        // pressurized compartment containing one or more exiting crewmembers (SW or KIA crew don't exit)
+        // Crew members don't go on oxygen, but may be wounded
+        if (bomber.getPressurizationSystem() == Pressurization.ON){
+            for (BomberCompartment bomberCompartment: BomberCompartment.values()){
+                if (bomber.isCompartmentPressurized(bomberCompartment)) {
+                    BomberDamageTable.ExplosiveDecompressionResult result = BomberDamageTable.getExplosiveDecompressionResult();
+                    if (result == BomberDamageTable.ExplosiveDecompressionResult.ALL_CREW_MEMBERS_WOUNDED) {
+                        for (CrewMember crewMember: bomber.getCrew()){
+                            if (crewMember.getBomberCompartment() == bomberCompartment && !crewMember.isSwOrKia()){
+                                // TODO Roll for wounds on 7-13
+                            }
+                        }
+                    } else if (result == BomberDamageTable.ExplosiveDecompressionResult.ROLL_FOR_EACH_CREW_MEMBER_WOUNDED) {
+                        for (CrewMember crewMember : bomber.getCrew()) {
+                            if (!crewMember.isSwOrKia() && BomberDamageTable.isCrewMemberWoundedFromExplosiveCompression()) {
+                                // TODO Roll for wounds on 7-13
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -1203,46 +1273,117 @@ if B-29 encounters thermal turbulence from incendiary caused fires.
         Bomber bomber = model.getGame().getBomber();
         Mission mission = model.getGame().getMission();
 
-        int totalEnginesOut = bomber.countEnginesOut();
+        if (mission.getZone() != mission.getLandingZone() || bomber.getAltitude() != Altitude.LO)
+            return;
+
+        // TODO Table 7-9 Note c:  Player may attempt to manually lower the main landing gear
+        //  once prior to landing, unless a flak BIP has occurred in aft bomb bay (damaging manual controls).
+        //  Role 1D: 1-5 = gear may be lowered, 6 = unsuccessful (-3 modifier to landing).
+        //  The player may attempt to lower the nose landing gear twice prior to landing.  Roll 1D for each attempt:
+        //  1-5 = nose landing gear extended, 6 = unsuccessful (-3 modifier to landing)
+
+        // TODO See similar note in Table 7-9 Note (e) pertaining to wing flaps
+
+        // TODO This logic isn't right
+
+        // TODO A plane with inop pilot and copilot flight controls may never be landed (Table 7-9 Note a)
+
+        boolean landingOnLand = false;
         if (mission.getBaseArea() == MapAreaCode.MARIANAS &&
                 mission.getZone() == 1 &&
                 bomber.getAltitude() == Altitude.LO &&
                 bomber.isOnCourse() &&
                 mission.getDirection() == Direction.RETURN_HOME){
-            // TODO Roll on 8-1
-            if (totalEnginesOut == 2 || totalEnginesOut == 3){
-                // -2 to Landing rolls on Tables 8-1 and 8-2
-            }
+            landingOnLand = true;
         }
 
+        // Iwo Jima was often subject to fog, making landings there more difficult.
         if (mission.getBaseArea() == MapAreaCode.IWO_JIMA &&
                 mission.getMissionNumber() >= 11 &&
                 mission.getZone() == 6 && mission.getDirection() == Direction.RETURN_HOME){
-            // TODO Consult Section 8.4
-        }
-
-        if (mission.getBaseArea() == MapAreaCode.JAPAN && mission.getZone() >= 10){
-            // TODO Consult Section 8.5
-        }
-
-        if (mission.getBaseArea() == MapAreaCode.WATER && (mission.getZone() <= 5 || (mission.getZone() >= 7 && mission.getZone() <= 9))){
-            // TODO Consult Section 8.6 and roll on 8-2
-            if (totalEnginesOut == 2 || totalEnginesOut == 3){
-                // -2 to Landing rolls on Tables 8-1 and 8-2
+            if (mission.getWeather() == Weather.GOOD) {
+                Weather weatherForLanding = Util.roll() <= 4 ? Weather.GOOD : Weather.POOR;
+                mission.setWeather(weatherForLanding);
+            }
+            else if (mission.getWeather() == Weather.POOR){
+                Weather weatherForLanding = Util.roll() <= 4 ? Weather.POOR: Weather.BAD;
+                mission.setWeather(weatherForLanding);
             }
         }
 
-        /*
-        TODO IWO JIMA A B-29 in Zone 6 may attempt to land at Iwo Jima if available as a friendly base
-(Missions #11- 35). Resolve weather (Section 4.4), navigation (Section 4.5), and random event
-(Section 4.6) in Zone 6 before attempting to land. Iwo Jima was often subject to fog,
-making landings there more difficult. Accordingly, if "Weather in Zone" for Zone 6 (Table 4-2)
-was "Good", roll 1D and apply the following: "1-4" = "Good" weather for landing, "5-6" =
-"Poor" weather for landing. If "Weather in Zone" for Zone 6 (Table 4-2) was "Poor", roll 1D and
-apply the following: "1-4" = "Poor" weather for landing, "5-6" = "Bad"
-weather for landing.
+        // Land in water
+        if (FlightLogGazeteer.getMapAreaCodes(mission.getTarget(), mission.getZone()).contains(MapAreaCode.WATER)){
+            landingOnLand = false;
+        }
 
-         */
+        if (landingOnLand) {
+            // Roll on 8-1
+            CrewLandingStatus crewLandingStatus = LandingTable.getCrewLandingStatusOnLand(mission, bomber);
+            switch (crewLandingStatus) {
+                case BOMBS_EXPLODE_KIA_WRECKED:
+                case FIRE_EXPLOSION_KIA_WRECKED:
+                case KIA_WRECKED:
+                    ViewUtil.popupNotify(crewLandingStatus.getName());
+                    bomber.setBomberStatus(BomberStatus.WRECKED);
+                    for (CrewMember crewMember : bomber.getCrew()) {
+                        crewMember.addWound(CrewStatus.KIA);
+                    }
+                    break;
+                case ROLL_FOR_WOUNDS_PLUS_ONE_WRECKED:
+                    ViewUtil.popupNotify("B-29 wrecked");
+                    bomber.setBomberStatus(BomberStatus.WRECKED);
+                    // TODO Roll for wounds 7-13 (+1 modifier)
+                    break;
+                case ROLL_FOR_WOUNDS_WRECKED:
+                    ViewUtil.popupNotify("B-29 wrecked");
+                    bomber.setBomberStatus(BomberStatus.WRECKED);
+                    // TODO Roll for wounds 7-13
+                    break;
+                case SAFE_IRREPARABLY_DAMAGED:
+                    ViewUtil.popupNotify("Crew safe, but B-29 irreparably damaged");
+                    bomber.setBomberStatus(BomberStatus.WRECKED);
+                    break;
+                case SAFE_REPAIRABLE:
+                    ViewUtil.popupNotify("Crew safe and B-29 repairable by next mission");
+                    bomber.setBomberStatus(BomberStatus.REPAIRABLE);
+                    break;
+                case SAFE:
+                    ViewUtil.popupNotify("Crew and B-29 safe");
+                    break;
+            }
+        }
+        else {
+            CrewLandingStatus crewLandingStatus = LandingTable.getCrewLandingStatusInWater(mission, bomber);
+            switch (crewLandingStatus){
+                case KIA_WRECKED:
+                    ViewUtil.popupNotify(crewLandingStatus.getName());
+                    bomber.setBomberStatus(BomberStatus.WRECKED);
+                    for (CrewMember crewMember: bomber.getCrew()){
+                        crewMember.addWound(CrewStatus.KIA);
+                    }
+                    break;
+                case ROLL_FOR_WOUNDS_PLUS_ONE_WRECKED:
+                    ViewUtil.popupNotify("B-29 wrecked");
+                    bomber.setBomberStatus(BomberStatus.WRECKED);
+                    // TODO Roll for wounds 7-13 (+1 modifier)
+                    break;
+                case ROLL_FOR_WOUNDS_WRECKED:
+                    ViewUtil.popupNotify("B-29 wrecked");
+                    bomber.setBomberStatus(BomberStatus.WRECKED);
+                    // TODO Roll for wounds 7-13
+                    break;
+                case SAFE_IRREPARABLY_DAMAGED:
+                    ViewUtil.popupNotify("Crew safe, but B-29 lost");
+                    break;
+            }
+        }
+
+        if (FlightLogGazeteer.getMapAreaCodes(mission.getTarget(), mission.getZone()).contains(MapAreaCode.JAPAN)){
+            // TODO If landing in Japan, each surviving crew member is captured, roll for each on Table 8-7
+            // TODO Implement this
+        }
+
+        // TODO See Table 7-13 Note (b)
     }
 
     private void handleVictoryConditions(){
@@ -1609,7 +1750,7 @@ Note that the "20 th Air Force Base" square counts as a Zone for purpose of this
                 ViewUtil.popupNotify("Forced out of formation!");
             }
             if (bomber.hasDamage(Damage.ENGINE_2_OUT) && bomber.hasDamage(Damage.ENGINE_3_OUT)) {
-                bomber.setPressurization(Pressurization.OFF);
+                bomber.setPressurizationSystem(Pressurization.OFF);
                 ViewUtil.popupNotify("Engine 2 and 3 are out, pressurization OFF!");
             }
 

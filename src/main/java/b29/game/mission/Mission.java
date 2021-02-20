@@ -20,6 +20,12 @@ public class Mission {
     private TimeOfDay missionTimeOfDay;
     private TimeOfDay baseTakeoffTimeOfDay;
     private TimeOfDay expectedLandingTimeOfDay;
+    public int abortOutMinDayZone;
+    public int abortOutMaxDayZone;
+    public int ditchOutMinDayZone;
+    public int ditchOutMaxDayZone;
+    public int ditchBackMinDayZone;
+    public int ditchBackMaxDayZone;
     private Altitude missionAltitude;
     private JapaneseFighterDensity expectedFighterDensity;
 
@@ -32,6 +38,10 @@ public class Mission {
     private int turnsInCurrentZone;
     private boolean outOfFormation;
     private boolean escortAvailable;
+
+    // Zone that we're going to land in
+    // Initially set to home base zone
+    private int landingZone;
 
     // Temporary variables used to track in-game progress
     private int numWaveAttacks;
@@ -51,6 +61,9 @@ public class Mission {
     // If numTurnsTillRegainFormation == 0, then regain formation.  If > 0, decrement.  If < 0, ignore.
     private int numTurnsTillRegainFormation;
 
+    // Number of zones the bomber may move before the crew MUST bail out
+    private int zonesBeforeBailOut;
+
     public Mission(int missionNumber) {
         this.missionNumber = missionNumber;
         baseArea = MapAreaCode.MARIANAS;
@@ -62,6 +75,12 @@ public class Mission {
         missionTimeOfDay = TimeOfDay.DAY;
         baseTakeoffTimeOfDay = TimeOfDay.DAY;
         expectedLandingTimeOfDay = TimeOfDay.DAY;
+        abortOutMinDayZone = 1;
+        abortOutMaxDayZone = 14;
+        ditchOutMinDayZone = 1;
+        ditchOutMaxDayZone = 14;
+        ditchBackMinDayZone = 1;
+        ditchBackMaxDayZone = 14;
         missionAltitude = Altitude.MED;
         expectedFighterDensity = JapaneseFighterDensity.NONE;
 
@@ -74,6 +93,7 @@ public class Mission {
         turnsInCurrentZone = 0;
         outOfFormation = true;
         escortAvailable = false;
+        landingZone = 0;
 
         numWaveAttacks = 0;
         numFighterDefenseLeft = 0;
@@ -87,6 +107,7 @@ public class Mission {
         ableToPerformEvasiveAction = true;
         spottedBySearchlight = false;
         numTurnsTillRegainFormation = -1;
+        zonesBeforeBailOut = -1;
 
         japaneseFighters.add(new JapaneseFighter(new FighterInfo(FighterType.FIGHTER_ZEKE, FighterApproach.AREA_12, FighterAltitude.HIGH)));
         japaneseFighters.add(new JapaneseFighter(new FighterInfo(FighterType.FIGHTER_TONY, FighterApproach.AREA_12, FighterAltitude.LEVEL)));
@@ -96,6 +117,23 @@ public class Mission {
         japaneseFighters.add(new JapaneseFighter(new FighterInfo(FighterType.FIGHTER_GEORGE, FighterApproach.AREA_1_30, FighterAltitude.LOW)));
         japaneseFighters.add(new JapaneseFighter(new FighterInfo(FighterType.FIGHTER_FRANK, FighterApproach.VERTICAL_CLIMB, FighterAltitude.LEVEL)));
         japaneseFighters.add(new JapaneseFighter(new FighterInfo(FighterType.FIGHTER_JACK, FighterApproach.VERTICAL_DIVE, FighterAltitude.LEVEL)));
+    }
+
+    public TimeOfDay getActualLandingTimeOfDay(){
+        if (aborted){
+            if (direction == Direction.TO_TARGET){
+                return (zone >= abortOutMinDayZone && zone <= abortOutMaxDayZone)? TimeOfDay.DAY: TimeOfDay.NIGHT;
+            }
+        }
+        else {
+            if (direction == Direction.TO_TARGET) {
+                return (zone >= ditchOutMinDayZone && zone <= ditchOutMaxDayZone)? TimeOfDay.DAY: TimeOfDay.NIGHT;
+            }
+            else {
+                return (zone >= ditchBackMinDayZone && zone <= ditchBackMaxDayZone)? TimeOfDay.DAY: TimeOfDay.NIGHT;
+            }
+        }
+        return expectedLandingTimeOfDay;
     }
 
     public int getMissionNumber() {
@@ -292,6 +330,54 @@ public class Mission {
         this.expectedLandingTimeOfDay = expectedLandingTimeOfDay;
     }
 
+    public int getAbortOutMaxDayZone() {
+        return abortOutMaxDayZone;
+    }
+
+    public int getAbortOutMinDayZone() {
+        return abortOutMinDayZone;
+    }
+
+    public void setAbortOutMinDayZone(int abortOutMinDayZone) {
+        this.abortOutMinDayZone = abortOutMinDayZone;
+    }
+
+    public void setAbortOutMaxDayZone(int abortOutMaxDayZone) {
+        this.abortOutMaxDayZone = abortOutMaxDayZone;
+    }
+
+    public int getDitchOutMinDayZone() {
+        return ditchOutMinDayZone;
+    }
+
+    public void setDitchOutMinDayZone(int ditchOutMinDayZone) {
+        this.ditchOutMinDayZone = ditchOutMinDayZone;
+    }
+
+    public int getDitchOutMaxDayZone() {
+        return ditchOutMaxDayZone;
+    }
+
+    public void setDitchOutMaxDayZone(int ditchOutMaxDayZone) {
+        this.ditchOutMaxDayZone = ditchOutMaxDayZone;
+    }
+
+    public int getDitchBackMinDayZone() {
+        return ditchBackMinDayZone;
+    }
+
+    public void setDitchBackMinDayZone(int ditchBackMinDayZone) {
+        this.ditchBackMinDayZone = ditchBackMinDayZone;
+    }
+
+    public int getDitchBackMaxDayZone() {
+        return ditchBackMaxDayZone;
+    }
+
+    public void setDitchBackMaxDayZone(int ditchBackMaxDayZone) {
+        this.ditchBackMaxDayZone = ditchBackMaxDayZone;
+    }
+
     public Weather getWeather() {
         return weather;
     }
@@ -382,5 +468,21 @@ public class Mission {
 
     public void adjNumTurnsTillRegainFormation(int amount) {
         this.numTurnsTillRegainFormation += amount;
+    }
+
+    public int getLandingZone() {
+        return landingZone;
+    }
+
+    public void setLandingZone(int landingZone) {
+        this.landingZone = landingZone;
+    }
+
+    public int getZonesBeforeBailOut() {
+        return zonesBeforeBailOut;
+    }
+
+    public void setZonesBeforeBailOut(int zonesBeforeBailOut) {
+        this.zonesBeforeBailOut = zonesBeforeBailOut;
     }
 }

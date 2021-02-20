@@ -211,9 +211,9 @@ public class JapaneseFighterAttackBoard extends JPanel {
                 bomber.getAltitude() == Altitude.MED? ALTITUDE_MED_COORD: ALTITUDE_LOW_COORD;
         g.drawImage(altitudeImage, coord.x, coord.y, null);
 
-        coord = bomber.getPressurization() == Pressurization.ON? CABIN_PRESSURE_ON_COORD:
-                bomber.getPressurization() == Pressurization.OFF? CABIN_PRESSURE_OFF_COORD: CABIN_PRESSURE_INOP_COORD;
-        g.drawImage(bomber.getPressurization() == Pressurization.INOP? cabinPressureInopImage: cabinPressureImage, coord.x, coord.y, null);
+        coord = bomber.getPressurizationSystem() == Pressurization.ON? CABIN_PRESSURE_ON_COORD:
+                bomber.getPressurizationSystem() == Pressurization.OFF? CABIN_PRESSURE_OFF_COORD: CABIN_PRESSURE_INOP_COORD;
+        g.drawImage(bomber.getPressurizationSystem() == Pressurization.INOP? cabinPressureInopImage: cabinPressureImage, coord.x, coord.y, null);
 
         coord = ZONE_COORDS.get(mission.getZone());
         Image bomberImage = bomberDownImage;
