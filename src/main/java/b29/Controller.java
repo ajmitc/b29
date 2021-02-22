@@ -39,6 +39,8 @@ public class Controller {
             public void actionPerformed(ActionEvent e) {
                 model.setGame(new Game());
 
+                String bomberName = ViewUtil.popupInput("Bomber Name", "Bomber Name?");
+
                 Campaign campaign = new Campaign();
                 model.getGame().setCampaign(campaign);
 
@@ -47,12 +49,11 @@ public class Controller {
                 model.getGame().getCampaign().getMissions().add(model.getGame().getMission());
 
                 model.getGame().setBomber(new Bomber());
+                model.getGame().getBomber().setName(bomberName);
                 model.getGame().getBomber().createDefaultCrew();
 
                 model.getGame().setPhase(Phase.SETUP_MISSION);
-                view.showGame();
-                view.refresh();
-                //run();
+                run();
             }
         });
 
@@ -75,10 +76,13 @@ public class Controller {
 
     protected void run(){
         while (model.getGame() != null && model.getGame().getPhase() != Phase.GAMEOVER){
+            view.refresh();
             switch (model.getGame().getPhase()){
                 case SETUP_MISSION:{
                     switch (model.getGame().getPhaseStep()){
                         case START_PHASE:
+                            view.getFrame().setTitle("B-29 - " + model.getGame().getBomber().getName());
+
                             Mission mission = model.getGame().getMission();
 
                             // Get Mission Time Of Day
@@ -100,6 +104,7 @@ public class Controller {
                             MissionSetupTable.TargetInfo targetInfo = MissionSetupTable.getMissionTarget(mission.getMissionNumber(), mission.getMissionTimeOfDay());
                             mission.setTarget(targetInfo.target);
                             mission.setTargetType(targetInfo.targetType);
+                            mission.setTargetZone(FlightLogGazeteer.getTargetZone(targetInfo.target));
 
                             // Set Altitude
                             mission.setMissionAltitude(MissionSetupTable.getMissionAltitude(mission.getMissionNumber(), mission.getMissionTimeOfDay(), mission.getTargetType()));
@@ -148,9 +153,12 @@ public class Controller {
                             model.getGame().setPhaseStep(PhaseStep.END_PHASE);
                             break;
                         case END_PHASE:
+                            view.showGame();
+                            view.refresh();
                             model.getGame().setPhase(Phase.PLAY_MISSION);
                             break;
                     }
+                    break;
                 }
                 case PLAY_MISSION:{
                     Mission mission = model.getGame().getMission();
@@ -172,6 +180,7 @@ public class Controller {
                         case PLAY_MISSION_TAKEOFF_MOVE_NEXT_ZONE_LANDING:
                             // Handle take-off
                             if (mission.getZone() == 0 && mission.getDirection() == Direction.TO_TARGET){
+                                ViewUtil.popupNotify("Ready to take-off");
                                 TakeoffResult takeoffResult =
                                         TakeOffLandingChart.getTakeoffResult(
                                                 mission.getMissionTimeOfDay(),
@@ -188,8 +197,10 @@ public class Controller {
                                         handleMidAirCollision(true);
                                         break;
                                     case CLOSE_CALL_NO_EFFECT:
+                                        ViewUtil.popupNotify("Close call, but take-off OK");
                                         break;
                                     case TAKEOFF_OK:
+                                        ViewUtil.popupNotify("Take-off OK");
                                         break;
                                 }
                                 if (model.getGame().getBomber().getBomberStatus() == BomberStatus.WRECKED){
@@ -202,6 +213,7 @@ public class Controller {
                             }
                             // Handle Landing
                             else if (mission.getZone() == 1 && mission.getDirection() == Direction.RETURN_HOME){
+                                ViewUtil.popupNotify("Prepare for landing");
                                 handleLanding();
                                 mission.setZone(0);
                             }
@@ -211,6 +223,7 @@ public class Controller {
                                 int totalEnginesOut = bomber.countEnginesOut();
                                 if (totalEnginesOut == 2 || totalEnginesOut == 3){
                                     if (mission.getTurnsInCurrentZone() == 1){
+                                        ViewUtil.popupNotify("2 or 3 Engines out, staying in zone");
                                         moveToNextZone = false;
                                     }
                                 }
@@ -222,20 +235,30 @@ public class Controller {
                                     } else {
                                         model.getGame().getMission().setZone(currentZone - 1);
                                     }
+                                    ViewUtil.popupNotify("Moved to next Zone (" + currentZone + " => " + model.getGame().getMission().getZone() + ")");
                                 }
 
                                 // Missions 1-10: Formation ends inbound in Zone 3
                                 if (mission.getMissionNumber() <= 10 && mission.getDirection() == Direction.RETURN_HOME && mission.getZone() == 3){
+                                    ViewUtil.popupNotify("Formation ends");
                                     mission.setOutOfFormation(true);
                                 }
 
                                 // Change altitude, if necessary
                                 Altitude goalAltitude = mission.getMissionAltitude();
+                                if (mission.getDirection() == Direction.RETURN_HOME &&
+                                        mission.getZone() < 3 &&
+                                        bomber.getAltitude() != Altitude.LO) {
+                                    ViewUtil.popupNotify("Descending for landing");
+                                    goalAltitude = Altitude.LO;
+                                }
                                 if (bomber.hasDamage(Damage.OXYGEN_OUT)){
+                                    ViewUtil.popupNotify("Oxygen out - descending toward LO altitude");
                                     // Must descend to LO altitude
                                     goalAltitude = Altitude.LO;
                                 }
                                 if (totalEnginesOut == 2 || totalEnginesOut == 3){
+                                    ViewUtil.popupNotify("2 or 3 engines out - descending toward LO altitude");
                                     goalAltitude = Altitude.LO;
                                 }
 
@@ -252,6 +275,7 @@ public class Controller {
                                         // Ascend
                                         bomber.setAltitude(Altitude.values()[bomber.getAltitude().ordinal() + 1]);
                                         altitudeChange = 1;
+                                        ViewUtil.popupNotify("Ascending toward mission altitude (" + goalAltitude + ")");
                                     } else {
                                         // Descend
                                         bomber.setAltitude(Altitude.values()[bomber.getAltitude().ordinal() - 1]);
@@ -299,8 +323,10 @@ subject to modifiers on Tables 8-1 and 8-2.
                             break;
                         case PLAY_MISSION_CONSUME_FUEL:
                             int fuelConsumed = getFuelConsumed(true);
+                            ViewUtil.popupNotify("Consuming " + fuelConsumed + " fuel");
                             boolean fuelLeft = bomber.consumeFuel(fuelConsumed);
                             if (!fuelLeft){
+                                ViewUtil.popupNotify("Out of fuel!");
                                 // Handle out-of-fuel (Table 4-1?)
                                 handleOutOfFuel();
                             }
@@ -318,9 +344,10 @@ subject to modifiers on Tables 8-1 and 8-2.
                             model.getGame().setPhaseStep(PhaseStep.PLAY_MISSION_ABORT_MISSION);
                             break;
                         case PLAY_MISSION_ABORT_MISSION:
-                            if (mission.getDirection() == Direction.TO_TARGET) {
+                            if (!mission.isAborted() && mission.isAbortable() && mission.getDirection() == Direction.TO_TARGET) {
                                 // TODO When is the user able to abort?
                                 if (ViewUtil.popupConfirm("Abort Mission?", "Abort Mission?")) {
+                                    ViewUtil.popupNotify("Aborting Mission!");
                                     mission.setAborted(true);
                                     // TODO What happens here?
                                     mission.setDirection(Direction.RETURN_HOME);
@@ -361,8 +388,17 @@ B. DAY Missions
 2. If roll on 5-1="Fighter Attack" then roll on Table 5-2 for type of aircraft
 3. Once type is determined, roll on Table 5-3 for area of attack
 4. Once area is determined, roll on Table 5-4 for angle of attack and place fighter
-5. Once angle is determined, roll on Table 5-5 for type of pilot
-
+h. Once angle is determined, roll on Table 5-5 for type of pilot
+                             */
+                            mission.setJapaneseFighters(new ArrayList<>());
+                            handleJapaneseFighterResistance();
+                            if (mission.getJapaneseFighters().isEmpty())
+                                model.getGame().setPhaseStep(PhaseStep.PLAY_MISSION_BOMB_RUN_FLAK);
+                            else
+                                model.getGame().setPhaseStep(PhaseStep.PLAY_MISSION_FIGHTER_ATTACK_B29_CHOOSE_DEFENSIVE_FIRE);
+                            break;
+                        case PLAY_MISSION_FIGHTER_ATTACK_B29_CHOOSE_DEFENSIVE_FIRE:
+                            /*
 C. Defensive Fire
 1. Each armed and operating G position may fire at one fighter within its field of fire as shown on
 Table 5-6
@@ -371,7 +407,17 @@ Table 5-6
 4. Mark off each burst. When gun is empty it may not fire
 5. Roll once for each firing gun on Table 5-7
 6. If fighter is hit, roll on Table 5-8. If destroyed, remove; if FCA, place marker on fighter
-
+                             */
+                            model.getGame().setPhaseStep(PhaseStep.PLAY_MISSION_FIGHTER_ATTACK_B29_DEFENSIVE_FIRE);
+                            break;
+                        case PLAY_MISSION_FIGHTER_ATTACK_B29_DEFENSIVE_FIRE:
+                            model.getGame().setPhaseStep(PhaseStep.PLAY_MISSION_FIGHTER_ATTACK_OFFENSIVE_FIRE);
+                            break;
+                        case PLAY_MISSION_FIGHTER_ATTACK_OFFENSIVE_FIRE:
+                            model.getGame().setPhaseStep(PhaseStep.PLAY_MISSION_FIGHTER_ATTACK_B29_DAMAGE);
+                            break;
+                        case PLAY_MISSION_FIGHTER_ATTACK_B29_DAMAGE:
+                            /*
 D. Japanese Offensive Fire
 1. Each surviving fighter rolls on Table 5-9
 2. If result is a Hit, roll on Table 5-10 for number of shells hitting
@@ -393,23 +439,6 @@ more engine out
   d. Fighter did not suffer and FCA
 5. Fighter removed after second successive attack
                              */
-                            mission.setJapaneseFighters(new ArrayList<>());
-                            handleJapaneseFighterResistance();
-                            if (mission.getJapaneseFighters().isEmpty())
-                                model.getGame().setPhaseStep(PhaseStep.PLAY_MISSION_BOMB_RUN_FLAK);
-                            else
-                                model.getGame().setPhaseStep(PhaseStep.PLAY_MISSION_FIGHTER_ATTACK_B29_CHOOSE_DEFENSIVE_FIRE);
-                            break;
-                        case PLAY_MISSION_FIGHTER_ATTACK_B29_CHOOSE_DEFENSIVE_FIRE:
-                            model.getGame().setPhaseStep(PhaseStep.PLAY_MISSION_FIGHTER_ATTACK_B29_DEFENSIVE_FIRE);
-                            break;
-                        case PLAY_MISSION_FIGHTER_ATTACK_B29_DEFENSIVE_FIRE:
-                            model.getGame().setPhaseStep(PhaseStep.PLAY_MISSION_FIGHTER_ATTACK_OFFENSIVE_FIRE);
-                            break;
-                        case PLAY_MISSION_FIGHTER_ATTACK_OFFENSIVE_FIRE:
-                            model.getGame().setPhaseStep(PhaseStep.PLAY_MISSION_FIGHTER_ATTACK_B29_DAMAGE);
-                            break;
-                        case PLAY_MISSION_FIGHTER_ATTACK_B29_DAMAGE:
                             model.getGame().setPhaseStep(PhaseStep.PLAY_MISSION_BOMB_RUN_FLAK);
                             break;
                         case PLAY_MISSION_BOMB_RUN_FLAK:
@@ -509,6 +538,7 @@ F. Sea: Ditching is necessary if a forced landing must be made in Zones 1-9 or i
                             model.getGame().setPhase(Phase.TEARDOWN_MISSION);
                             break;
                     }
+                    break;
                 }
                 case TEARDOWN_MISSION:{
                     switch (model.getGame().getPhaseStep()){
@@ -520,6 +550,7 @@ F. Sea: Ditching is necessary if a forced landing must be made in Zones 1-9 or i
                             model.getGame().setPhase(Phase.SETUP_MISSION);
                             break;
                     }
+                    break;
                 }
             }
         }
@@ -530,10 +561,12 @@ F. Sea: Ditching is necessary if a forced landing must be made in Zones 1-9 or i
 
         if (bomber.getPressurizationSystem() != Pressurization.INOP) {
             // If altitude changed from LO <-> MED, auto de/pressurize
-            if (altitudeChange > 0 && bomber.getAltitude() == Altitude.MED) {
+            if (altitudeChange > 0 && bomber.getAltitude() == Altitude.MED && bomber.getPressurizationSystem() != Pressurization.ON) {
                 bomber.setPressurizationSystem(Pressurization.ON);
-            } else if (altitudeChange < 0 && bomber.getAltitude() == Altitude.LO) {
+                ViewUtil.popupNotify("Pressurization auto-ON");
+            } else if (altitudeChange < 0 && bomber.getAltitude() == Altitude.LO && bomber.getPressurizationSystem() != Pressurization.OFF) {
                 bomber.setPressurizationSystem(Pressurization.OFF);
+                ViewUtil.popupNotify("Pressurization auto-OFF");
             }
         }
 
@@ -1084,8 +1117,15 @@ c. Roll 1D 1-5=Condition discovered in time; 6=KIA
         }
     }
 
+    /*
+A. Determine Fighter Resistance
+1. In Zones 10-14 or Zone 6 if Iwo=Japanese, roll on Table 5-1
+2. TODO If pressurized at MED or HI, P decides to depressurize before roll. (May not if repressurized the
+previous turn from a voluntary depressurization.)
+     */
     private void handleJapaneseFighterResistance(){
         Mission mission = model.getGame().getMission();
+        // TODO Player decide whether to depressurize (not allowed if re-pressurized previous turn from a voluntary depressurization)
         if (mission.getZone() >= 10 || (mission.getZone() == 6 && mission.getMissionNumber() <= 10)){
             if (mission.getMissionTimeOfDay() == TimeOfDay.DAY && mission.getMissionNumber() <= 10 &&
                     mission.getBaseTakeoffTimeOfDay() == TimeOfDay.DAY && mission.getExpectedLandingTimeOfDay() == TimeOfDay.NIGHT &&
@@ -1098,6 +1138,44 @@ c. Roll 1D 1-5=Condition discovered in time; 6=KIA
         }
     }
 
+    /*
+B. DAY Missions
+1. Roll 1D on Table 5-1
+2. If roll on 5-1="Fighter Attack" then roll on Table 5-2 for type of aircraft
+3. Once type is determined, roll on Table 5-3 for area of attack
+4. Once area is determined, roll on Table 5-4 for angle of attack and place fighter
+5. Once angle is determined, roll on Table 5-5 for type of pilot
+
+C. Defensive Fire
+1. Each armed and operating G position may fire at one fighter within its field of fire as shown on
+Table 5-6
+2. If intercom out, roll on Table 5-6 and use parenthetical range (if applicable)
+3. Once allocated to a particular target, the position may not be unallocated
+4. Mark off each burst. When gun is empty it may not fire
+5. Roll once for each firing gun on Table 5-7
+6. If fighter is hit, roll on Table 5-8. If destroyed, remove; if FCA, place marker on fighter
+
+D. Japanese Offensive Fire
+1. Each surviving fighter rolls on Table 5-9
+2. If result is a Hit, roll on Table 5-10 for number of shells hitting
+3. For each shell hit, roll on Table 5-11 for appropriate clock position of fighter
+4. After determining section, roll on Table 5-12 for each hit, result=# of rolls for Damage Tables
+based on fighter type
+5. Roll on specific damage table (Tables 7-1 through 7-14) and resolve and record
+6. If a compartment is hit crew casualties must be rolled for
+
+E. Successive Attacks
+1. Frank or Tojo: Each hit, roll 1D, 1-3=NE; 4-6=Fighter is able to attack again
+2. Undamaged Nick, Tony, Zeke, Oscar, or George: Only if B-29 is Out of Formation and one or
+more engine out
+3. For each eligible, roll once on Table 5-13, if attack, resolve as normal for attack and collision
+4. Pre-conditions for successive attack:
+a. Fighter scored hit and
+b. B-29 is Out of Formation and
+c. One or more engines out and
+d. Fighter did not suffer and FCA
+5. Fighter removed after second successive attack
+     */
     private void determineJapaneseFighterResistance(JapaneseFighterDensity density){
         if (model.getGame().getMission().getMissionTimeOfDay() == TimeOfDay.DAY)
             determineJapaneseFighterResistanceDay(density);
@@ -1192,6 +1270,7 @@ if B-29 encounters thermal turbulence from incendiary caused fires.
         Bomber bomber = model.getGame().getBomber();
         if (mission.getZone() == mission.getTargetZone() && mission.getDirection() == Direction.TO_TARGET && bomber.isCarryingBombs()){
             // TODO Roll on Tables 6-1 to 6-9
+            ViewUtil.popupNotify("Bomber over target!");
         }
     }
 
@@ -1427,6 +1506,7 @@ measured with Tables 9-2 and 9-3
     private void determineWeather(){
         Mission mission = model.getGame().getMission();
         Bomber bomber = model.getGame().getBomber();
+
         Weather weather;
 
         // If mission.isStormSystemEncountered(), weather is auto-BAD
@@ -1439,6 +1519,7 @@ measured with Tables 9-2 and 9-3
         }
         else {
             weather = WeatherChart.get(mission, bomber);
+            ViewUtil.popupNotify("Weather is " + weather);
         }
         mission.setWeather(weather);
 

@@ -42,6 +42,10 @@ public class JapaneseFighterAttackBoard extends JPanel {
 
     private static final int FIGHTER_TOKEN_WIDTH = 55;
 
+    private static final int MISSION_DETAILS_X = 20;
+    private static final int MISSION_DETAILS_Y = 20;
+    private static final int MISSION_DETAILS_Y_OFFSET = 20;
+
     static {
         ZONE_COORDS.add(new Point(1115, 591));  // Home Base
         ZONE_COORDS.add(new Point(1115, 638));  // Zone 1
@@ -215,6 +219,7 @@ public class JapaneseFighterAttackBoard extends JPanel {
                 bomber.getPressurizationSystem() == Pressurization.OFF? CABIN_PRESSURE_OFF_COORD: CABIN_PRESSURE_INOP_COORD;
         g.drawImage(bomber.getPressurizationSystem() == Pressurization.INOP? cabinPressureInopImage: cabinPressureImage, coord.x, coord.y, null);
 
+        // Draw bomber token
         coord = ZONE_COORDS.get(mission.getZone());
         Image bomberImage = bomberDownImage;
         if (mission.getDirection() == Direction.TO_TARGET){
@@ -229,6 +234,10 @@ public class JapaneseFighterAttackBoard extends JPanel {
                 bomberImage = bomberUpImage;
         }
         g.drawImage(bomberImage, coord.x, coord.y, null);
+
+        // Draw target token
+        coord = ZONE_COORDS.get(mission.getTargetZone());
+        g.drawImage(targetImage, coord.x, coord.y, null);
 
         if (mission.getEscort() != null){
             g.drawImage(fighterImages.get(mission.getEscort()), ESCORT_COORD.x, ESCORT_COORD.y, null);
@@ -245,9 +254,41 @@ public class JapaneseFighterAttackBoard extends JPanel {
             g.drawImage(image, coord.x, coord.y, null);
         }
 
+        // Draw Mission Details
         g.setColor(Color.WHITE);
-        g.fillRect(0, 0, 80, 20);
+        g.fillRect(0, 0, 250, 300);
         g.setColor(Color.BLACK);
-        g.drawString(mx + ", " + my, 20, 20);
+        int x = MISSION_DETAILS_X;
+        int y = MISSION_DETAILS_Y;
+        g.drawString("Mission #" + mission.getMissionNumber() + " (This bomber: #" + (bomber.getNumMissionsCompleted() + 1) + ")", x, y);
+        y += MISSION_DETAILS_Y_OFFSET;
+        g.drawString("Mission TOD: " + (mission.getMissionTimeOfDay() != null? mission.getMissionTimeOfDay().name(): ""), x, y);
+        y += MISSION_DETAILS_Y_OFFSET;
+        g.drawString("Mission Altitude: " + (mission.getMissionAltitude() != null? mission.getMissionAltitude().name(): ""), x, y);
+        y += MISSION_DETAILS_Y_OFFSET;
+        g.drawString("Target: " + (mission.getTarget() != null? mission.getTarget().name(): ""), x, y);
+        y += MISSION_DETAILS_Y_OFFSET;
+        g.drawString("Target Type: " + (mission.getTargetType() != null? mission.getTargetType().name(): ""), x, y);
+        y += MISSION_DETAILS_Y_OFFSET;
+        g.drawString("Escort Available: " + (mission.isEscortAvailable()? "Yes": "No"), x, y);
+        y += MISSION_DETAILS_Y_OFFSET;
+        g.drawString("Escort Rendezvous: " + (mission.getEscort() != null? "Yes": "No"), x, y);
+        y += MISSION_DETAILS_Y_OFFSET;
+        g.drawString("Formation Position: " + (mission.getFormationPosition() != null? mission.getFormationPosition().name(): ""), x, y);
+        y += MISSION_DETAILS_Y_OFFSET;
+        g.drawString("Squadron Position: " + (mission.getSquadronPosition() != null? mission.getSquadronPosition().name(): ""), x, y);
+        y += MISSION_DETAILS_Y_OFFSET;
+        g.drawString("In Formation? " + (!mission.isOutOfFormation()? "Yes": "No"), x, y);
+        y += MISSION_DETAILS_Y_OFFSET;
+        g.drawString("Main Fuel: " + bomber.getFuelLeft(), x, y);
+        y += MISSION_DETAILS_Y_OFFSET;
+        g.drawString("Aux Fwd Fuel: " + bomber.getAuxFwdFuelLeft(), x, y);
+        y += MISSION_DETAILS_Y_OFFSET;
+        g.drawString("Aux Aft Fuel: " + bomber.getAuxAftFuelLeft(), x, y);
+
+        g.setColor(Color.WHITE);
+        g.fillRect(120, 0, 80, 20);
+        g.setColor(Color.BLACK);
+        g.drawString(mx + ", " + my, 120, 20);
     }
 }

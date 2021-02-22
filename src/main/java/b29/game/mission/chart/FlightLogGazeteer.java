@@ -284,6 +284,10 @@ public class FlightLogGazeteer {
         return info.codes;
     }
 
+    public static int getTargetZone(Target target){
+        return zoneInfo.get(target).keySet().stream().max(Integer::compareTo).get();
+    }
+
     public static boolean targetWithoutSearchlightsOrAAGuns(Target target){
         return targetsWithoutSearchlightsOrAAGuns.contains(target);
     }

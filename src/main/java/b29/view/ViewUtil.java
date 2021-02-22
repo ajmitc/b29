@@ -8,8 +8,13 @@ public class ViewUtil {
     }
 
     public static boolean popupConfirm(String title, String message){
+        // 0=yes, 1=no, 2=cancel
         int ret = JOptionPane.showConfirmDialog(null, message, title, JOptionPane.YES_NO_OPTION);
-        return ret >= 1;
+        return ret == 0;
+    }
+
+    public static String popupInput(String title, String message){
+        return JOptionPane.showInputDialog(null, message, title, JOptionPane.PLAIN_MESSAGE);
     }
 
     private ViewUtil(){}

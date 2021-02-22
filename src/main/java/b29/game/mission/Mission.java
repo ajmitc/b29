@@ -33,7 +33,8 @@ public class Mission {
     private int bombRunPercentage;
     //private int landingModifier;
     private Direction direction;
-    private boolean aborted;
+    private boolean abortable;  // Should we give the player an option to abort?
+    private boolean aborted;    // Has the player aborted the mission?
     private int zone;
     private int turnsInCurrentZone;
     private boolean outOfFormation;
@@ -88,6 +89,7 @@ public class Mission {
         bombRunPercentage = 0;
         //landingModifier = 0;
         direction = Direction.TO_TARGET;
+        abortable = false;
         aborted = false;
         zone = 0;  // Home Base
         turnsInCurrentZone = 0;
@@ -232,6 +234,14 @@ public class Mission {
 
     public void setDirection(Direction direction) {
         this.direction = direction;
+    }
+
+    public boolean isAbortable() {
+        return abortable;
+    }
+
+    public void setAbortable(boolean abortable) {
+        this.abortable = abortable;
     }
 
     public boolean isAborted() {
